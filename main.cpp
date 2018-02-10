@@ -1,16 +1,36 @@
 #include <iostream>
+#include <chrono>
 #include <Util.h>
+#include <Blobber.h>
 #include "XimeaCamera.h"
 #include "Gui.h"
 #include "FpsCounter.h"
 #include "SignalHandler.h"
 #include "xiApi.h"
 
+/** Use to init the clock */
+#define TIMER_INIT \
+    LARGE_INTEGER frequency; \
+    LARGE_INTEGER t1,t2; \
+    double elapsedTime; \
+    QueryPerformanceFrequency(&frequency);
+
+
+/** Use to start the performance timer */
+#define TIMER_START QueryPerformanceCounter(&t1);
+
+/** Use to stop the performance timer and output the result to the standard stream. Less verbose than \c TIMER_STOP_VERBOSE */
+#define TIMER_STOP \
+    QueryPerformanceCounter(&t2); \
+    elapsedTime=(float)(t2.QuadPart-t1.QuadPart)/frequency.QuadPart;
+
 FpsCounter *fpsCounter = nullptr;
 XimeaCamera *ximeaCamera = nullptr;
 Gui *gui = nullptr;
+Blobber *blobber = nullptr;
 
 unsigned char* rgb = new unsigned char[1280 * 1024 * 3];
+unsigned char* bgr = new unsigned char[640 * 512 * 3];
 
 bool showGui = true;
 
@@ -40,6 +60,8 @@ void setupGui() {
 }
 
 void run() {
+    TIMER_INIT
+
     std::cout << "! Starting main loop" << std::endl;
 
     bool running = true;
@@ -99,7 +121,9 @@ void run() {
             int halfWidth = width / 2;
             int halfHeight = height / 2;
 
-            /*for (int y = 0; y < halfHeight; y++) {
+            //TIMER_START
+
+            for (int y = 0; y < halfHeight; y++) {
                 for (int x = 0; x < halfWidth; x++) {
                     unsigned char b = *(frame->data + (2 * y + 1) * width + 2 * x + 1);
                     //unsigned char g = (*(frame->data + 2 * y * width + 2 * x + 1) + *(frame->data + (2 * y + 1) * width + 2 * x)) / 2;
@@ -111,11 +135,30 @@ void run() {
                     rgb[(y * width + x) * 3 + 1] = g;
                     rgb[(y * width + x) * 3 + 2] = r;
 
+                    bgr[(y * halfWidth + x) * 3] = b;
+                    bgr[(y * halfWidth + x) * 3 + 1] = g;
+                    bgr[(y * halfWidth + x) * 3 + 2] = r;
+
                     //rgb[(y * width + x) * 3] = 255;
                     //rgb[(y * width + x) * 3 + 1] = 0;
                     //rgb[(y * width + x) * 3 + 2] = 255;
                 }
-            }*/
+            }
+
+            TIMER_START
+
+            //blobber->analyse(bgr);
+            blobber->analyse(f);
+
+            TIMER_STOP
+
+            std::wcout << elapsedTime << L" sec" << std::endl;
+
+            running = false;
+
+            //unsigned short* blobs = blobber->getBlobs(1);
+
+            //std::cout << "blob " << blobs[0] << " " << blobs[1] << " " << blobs[2] << std::endl;
 
             /*for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
@@ -133,7 +176,7 @@ void run() {
                 }
             }*/
 
-            for (int y=1; y < h-1; y += 2) {//ignore sides
+            /*for (int y=1; y < h-1; y += 2) {//ignore sides
                 for (int x = 1; x < w-1; x+=2) {
                     //http://en.wikipedia.org/wiki/Bayer_filter
                     //current block is BGGR
@@ -161,7 +204,11 @@ void run() {
                     p[txy++] = (f[xy-1]+f[xy+1]+f[xy-w]+f[xy+w]+2) >> 2;//left,right,up,down
                     p[txy]   = f[xy];
                 }
-            }
+            }*/
+
+            //TIMER_STOP
+
+            //std::wcout<<elapsedTime<<L" sec"<<std::endl;
 
             /*for (int y=1; y < h-1; y += 2) {//ignore sides
                 for (int x = 1; x < w-1; x+=2) {
@@ -231,7 +278,28 @@ void run() {
 int main() {
     fpsCounter = new FpsCounter();
 
-    ximeaCamera = new XimeaCamera(857769553);
+    blobber = new Blobber();
+
+    unsigned char* blobberColors = new unsigned char[0x1000000];
+
+    for (int r = 0; r < 255; r++) {
+        for (int g = 0; g < 255; g++) {
+            for (int b = 0; b < 255; b++) {
+                //if (r > 50 && r < 200) {
+                    blobberColors[b + (g << 8) + (r << 16)] = 1;
+                /*} else {
+                    blobberColors[b + (g << 8) + (r << 16)] = 255;
+                }*/
+            }
+        }
+    }
+
+    //blobber->setColors(blobberColors);
+
+    blobber->start();
+
+    //ximeaCamera = new XimeaCamera(857769553);
+    ximeaCamera = new XimeaCamera(374363729);
 
     ximeaCamera->open();
 
