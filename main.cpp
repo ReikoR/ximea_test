@@ -152,13 +152,27 @@ void run() {
 
             TIMER_STOP
 
+            //std::wcout << "rle " << blobber->rle[1000].x << std::endl;
+
             std::wcout << elapsedTime << L" sec" << std::endl;
 
-            running = false;
+            //running = false;
 
-            //unsigned short* blobs = blobber->getBlobs(1);
+            BlobInfo* blobInfo = blobber->getBlobs(1);
 
-            //std::cout << "blob " << blobs[0] << " " << blobs[1] << " " << blobs[2] << std::endl;
+            std::cout << "blobCount " << blobInfo->count << std::endl;
+
+            if (blobInfo->count > 0) {
+                std::cout << "blob " << blobInfo->blobs[0].area << " " << blobInfo->blobs[0].centerX << " "
+                          << blobInfo->blobs[0].centerY << std::endl;
+
+                int x = blobInfo->blobs[0].centerX / 2;
+                int y = blobInfo->blobs[0].centerY / 2;
+
+                rgb[(y * width + x) * 3] = 0;
+                rgb[(y * width + x) * 3 + 1] = 0;
+                rgb[(y * width + x) * 3 + 2] = 255;
+            }
 
             /*for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
@@ -270,6 +284,8 @@ void run() {
         }*/
     }
 
+    delete ximeaCamera;
+
     Sleep(10000);
 
     std::cout << "! Main loop ended" << std::endl;
@@ -285,21 +301,22 @@ int main() {
     for (int r = 0; r < 255; r++) {
         for (int g = 0; g < 255; g++) {
             for (int b = 0; b < 255; b++) {
-                //if (r > 50 && r < 200) {
+                if (r >= 100 && r <= 255 && g >= 130 && g <= 180 && b >= 100 && b <= 120) {
                     blobberColors[b + (g << 8) + (r << 16)] = 1;
-                /*} else {
-                    blobberColors[b + (g << 8) + (r << 16)] = 255;
-                }*/
+                } else {
+                    blobberColors[b + (g << 8) + (r << 16)] = 0;
+                }
             }
         }
     }
 
-    //blobber->setColors(blobberColors);
+    blobber->setColors(blobberColors);
+    blobber->setColorMinArea(1, 100);
 
     blobber->start();
 
-    //ximeaCamera = new XimeaCamera(857769553);
-    ximeaCamera = new XimeaCamera(374363729);
+    ximeaCamera = new XimeaCamera(857769553);
+    //ximeaCamera = new XimeaCamera(374363729);
 
     ximeaCamera->open();
 

@@ -81,6 +81,21 @@ typedef struct {
     char *name;
 } color_class_state;
 
+typedef struct Blob {
+    unsigned short area;
+    unsigned short centerX;
+    unsigned short centerY;
+    unsigned short x1;
+    unsigned short x2;
+    unsigned short y1;
+    unsigned short y2;
+} Blob;
+
+typedef struct BlobInfo {
+    Blob* blobs;
+    unsigned short count;
+} BlobInfo;
+
 /*typedef struct {
     unsigned char colors_lookup[0x1000000];//all possible bgr combinations lookup table/
     unsigned char pixel_active[MAX_WIDTH * MAX_HEIGHT];//0=ignore in segmentation, 1=use pixel
@@ -115,9 +130,9 @@ public:
 
 	void segExtractRegions();
 	void segSeparateRegions();
-	BlobberRegion* segSortRegions(BlobberRegion *list, int passes );
-	void analyse(unsigned char *bgr);
-	unsigned short *getBlobs(int color);
+	BlobberRegion* segSortRegions(BlobberRegion *list, int passes);
+	void analyse(unsigned char *frame);
+	BlobInfo* getBlobs(int color);
 
 private:
 	int rangeSum(int x, int w);

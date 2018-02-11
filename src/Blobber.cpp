@@ -38,6 +38,7 @@ Get blobs:
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
+#include <array>
 #include "Blobber.h"
 
 Blobber::Blobber() {
@@ -50,8 +51,6 @@ Blobber::Blobber() {
 	run_c = 0;
 	region_c = 0;
 	max_area = 0;
-
-    rle = new BlobberRun[MAX_RUNS];
 	
 	int i;
 	for(i=0; i<COLOR_COUNT; i++) {
@@ -137,7 +136,7 @@ void Blobber::segEncodeRuns() {
 	int x, y, j, l;
 	BlobberRun r;
 	unsigned char *map = segmented;
-	BlobberRun *rle = rle;
+	BlobberRun *rle = this->rle;
 	
 	int w = width;
 	int h = height;
@@ -357,7 +356,7 @@ void Blobber::segSeparateRegions() {
 	}
 }
 
-BlobberRegion* Blobber::segSortRegions(BlobberRegion *list, int passes ) {
+BlobberRegion* Blobber::segSortRegions(BlobberRegion *list, int passes) {
 // Sorts a list of regions by their area field.
 // Uses a linked list based radix sort to process the list.
 	BlobberRegion *tbl[CMV_RADIX]={NULL}, *p=NULL, *pn=NULL;
@@ -463,8 +462,6 @@ void Blobber::analyse(unsigned char *frame) {
 				r = f[xy];
 				segmented[xy] = colors_lookup[b + (g << 8) + (r << 16)];
 			}
-
-			//std::cout << +segmented[xy] << std::endl;
 		}
 	}
 	
@@ -482,36 +479,41 @@ void Blobber::analyse(unsigned char *frame) {
 	passes = y;
 }
 
-unsigned short* Blobber::getBlobs(int color) {
+BlobInfo* Blobber::getBlobs(int color) {
 	//get blobs for color, return numpy array [[distance,angle,area,cen_x,cen_y,x1,x2,y1,y2],...]
 
 	BlobberRegion *list = segSortRegions(colors[color].list, passes);
 	int rows = colors[color].num;
-	int cols = 7;
+	//int cols = 7;
 	int i;
-	int n = 0;
+	//int n = 0;
 	int w = width;
-	int xy;
+	//int xy;
 	unsigned short cen_x, cen_y;
-	unsigned short *pout = (unsigned short *) malloc(rows * cols * sizeof(unsigned short));
+	//unsigned short *pout = (unsigned short *) malloc(rows * cols * sizeof(unsigned short));
+    Blob* blobs = new Blob[rows];
+    BlobInfo* blobInfo = new BlobInfo();
 
-	if (rows > 0) {
+    blobInfo->count = rows;
+    blobInfo->blobs = blobs;
+
+	/*if (rows > 0) {
 		std::cout << "rows " << rows << std::endl;
-	}
+	}*/
 
-	for (i=0; i<rows; i++) {
+	for (i = 0; i < rows; i++) {
 		cen_x = (unsigned short)round(list[i].cen_x);
 		cen_y = (unsigned short)round(list[i].cen_y);
-		xy = cen_y * w + cen_x;
+		//xy = cen_y * w + cen_x;
 
-		pout[n++] = (unsigned short)min(65535 , list[i].area);
-		pout[n++] = cen_x;
-		pout[n++] = cen_y;
-		pout[n++] = (unsigned short)list[i].x1;
-		pout[n++] = (unsigned short)list[i].x2;
-		pout[n++] = (unsigned short)list[i].y1;
-		pout[n++] = (unsigned short)list[i].y2;
+        blobs[i].area = (unsigned short)min(65535 , list[i].area);
+        blobs[i].centerX = cen_x;
+        blobs[i].centerY = cen_y;
+        blobs[i].x1 = (unsigned short)list[i].x1;
+        blobs[i].x2 = (unsigned short)list[i].x2;
+        blobs[i].y1 = (unsigned short)list[i].y1;
+        blobs[i].y2 = (unsigned short)list[i].y2;
 	}
 
-	return pout;
+	return blobInfo;
 }

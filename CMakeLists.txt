@@ -3,6 +3,8 @@ project(ximea_test)
 
 set(CMAKE_CXX_STANDARD 14)
 
+#set(CMAKE_CXX_FLAGS "-D_GLIBCXX_USE_CXX11_ABI=0")
+
 include_directories(include)
 include_directories(xiApi)
 
@@ -33,5 +35,6 @@ set(SOURCE_FILES
         include/Blobber.h
         src/Blobber.cpp
         )
+
 add_executable(ximea_test ${SOURCE_FILES})
 target_link_libraries(ximea_test xiapi64.lib)
