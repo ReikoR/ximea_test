@@ -24,9 +24,9 @@ DisplayWindow::DisplayWindow(HINSTANCE instance, int width, int height, std::str
 		int nResult = GetLastError();
 
 		MessageBox(NULL,
-			"Window creation failed",
-			"Window Creation Failed",
-			MB_ICONERROR);
+				   "Window creation failed",
+				   "Window Creation Failed",
+				   MB_ICONERROR);
 	}
 
 	bitmapInfo.bmiHeader.biSize = sizeof(bitmapInfo.bmiHeader);
@@ -71,7 +71,7 @@ void DisplayWindow::setImage(unsigned char* image, bool rgb2bgr) {
 
 	canvas->data = image;
 
-	if (rgb2bgr) {
+	/*if (rgb2bgr) {
 		// BGR to RGB..
 		unsigned char blue;
 
@@ -80,9 +80,9 @@ void DisplayWindow::setImage(unsigned char* image, bool rgb2bgr) {
 			image[i] = image[i + 2];
 			image[i + 2] = blue;
 		}
-	}
+	}*/
 
-    SetDIBits(windowDeviceHandle, bitmap, 0, height, image, &bitmapInfo, DIB_RGB_COLORS);
+	SetDIBits(windowDeviceHandle, bitmap, 0, height, image, &bitmapInfo, DIB_RGB_COLORS);
 	bitmap = (HBITMAP) SelectObject(bitmapDeviceHandle, bitmap);
 	//BitBlt (windowDeviceHandle, 0, 0, width, height, bitmapDeviceHandle, 0, 0, SRCCOPY);
 	StretchBlt(windowDeviceHandle, 0, height, width, -height, bitmapDeviceHandle, 0, 0, width, height, SRCCOPY);
@@ -91,5 +91,84 @@ void DisplayWindow::setImage(unsigned char* image, bool rgb2bgr) {
 }
 
 LRESULT DisplayWindow::handleMessage(HWND windowHandle, UINT msg, WPARAM wParam, LPARAM lParam) {
-	return DefWindowProc(windowHandle, msg, wParam, lParam);
+	int x, y, delta;
+
+	switch(msg) {
+		case WM_LBUTTONDOWN:
+			if (gui != NULL) {
+				x = (short)LOWORD(lParam);
+				y = (short)HIWORD(lParam);
+
+				gui->emitMouseDown(x, y, MouseListener::MouseBtn::LEFT, this);
+			}
+			break;
+
+		case WM_LBUTTONUP:
+			if (gui != NULL) {
+				x = (short)LOWORD(lParam);
+				y = (short)HIWORD(lParam);
+
+				gui->emitMouseUp(x, y, MouseListener::MouseBtn::LEFT, this);
+			}
+			break;
+
+		case WM_RBUTTONDOWN:
+			if (gui != NULL) {
+				x = (short)LOWORD(lParam);
+				y = (short)HIWORD(lParam);
+
+				gui->emitMouseDown(x, y, MouseListener::MouseBtn::RIGHT, this);
+			}
+			break;
+
+		case WM_RBUTTONUP:
+			if (gui != NULL) {
+				x = (short)LOWORD(lParam);
+				y = (short)HIWORD(lParam);
+
+				gui->emitMouseUp(x, y, MouseListener::MouseBtn::RIGHT, this);
+			}
+			break;
+
+		case WM_MBUTTONDOWN:
+			if (gui != NULL) {
+				x = (short)LOWORD(lParam);
+				y = (short)HIWORD(lParam);
+
+				gui->emitMouseDown(x, y, MouseListener::MouseBtn::MIDDLE, this);
+			}
+			break;
+
+		case WM_MBUTTONUP:
+			if (gui != NULL) {
+				x = (short)LOWORD(lParam);
+				y = (short)HIWORD(lParam);
+
+				gui->emitMouseUp(x, y, MouseListener::MouseBtn::MIDDLE, this);
+			}
+			break;
+
+		case WM_MOUSEMOVE:
+			if (gui != NULL) {
+				x = (short)GET_X_LPARAM(lParam);
+				y = (short)GET_Y_LPARAM(lParam);
+
+				gui->emitMouseMove(x, y, this);
+			}
+			break;
+
+		case WM_MOUSEWHEEL:
+			if (gui != NULL) {
+				delta = (int)GET_WHEEL_DELTA_WPARAM(wParam);
+
+				gui->emitMouseWheel(delta, this);
+			}
+			break;
+
+		default:
+			return DefWindowProc(windowHandle, msg, wParam, lParam);
+			break;
+	}
+
+	return 0;
 }

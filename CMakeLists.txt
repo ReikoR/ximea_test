@@ -34,6 +34,22 @@ set(SOURCE_FILES
         include/BaseCamera.h
         include/Blobber.h
         src/Blobber.cpp
+        include/ImageProcessor.h
+        src/ImageProcessor.cpp
+        include/CameraTranslator.h
+        src/CameraTranslator.cpp
+        include/LookupTable.h
+        src/LookupTable.cpp
+        include/Vision.h
+        src/Vision.cpp
+        include/Object.h
+        src/Object.cpp
+        include/Maths.h
+        src/Maths.cpp
+        include/SoccerBot.h
+        src/SoccerBot.cpp
+        include/MouseListener.h
+        include/Config.h
         )
 
 add_executable(ximea_test ${SOURCE_FILES})

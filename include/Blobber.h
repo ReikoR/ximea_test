@@ -47,12 +47,12 @@ Get blobs:
 #define MAX_RUNS MAX_WIDTH * MAX_HEIGHT / 4
 #define MAX_REG MAX_WIDTH * MAX_HEIGHT / 16
 
-#define max(a,b) \
+#define max2(a,b) \
 	({ __typeof__ (a) _a = (a); \
 		__typeof__ (b) _b = (b); \
 		_a > _b ? _a : _b; })
 
-#define min(a,b) \
+#define min2(a,b) \
 	({ __typeof__ (a) _a = (a); \
 		__typeof__ (b) _b = (b); \
 		_a < _b ? _a : _b; })
@@ -120,6 +120,7 @@ public:
 
 	void setColorMinArea(int color, int min_area);
 	void setColors(unsigned char *data);
+    void setPixelColor(unsigned char r, unsigned char g, unsigned char b, int color);
 	void setActivePixels(unsigned char *data);
 	void refreshSize();
 	void start();
@@ -134,12 +135,14 @@ public:
 	void analyse(unsigned char *frame);
 	BlobInfo* getBlobs(int color);
 
+    unsigned char *segmented;//segmented image buffer 0-9
+
 private:
 	int rangeSum(int x, int w);
 
 	unsigned char colors_lookup[0x1000000];//all possible bgr combinations lookup table/
 	unsigned char pixel_active[MAX_WIDTH * MAX_HEIGHT];//0=ignore in segmentation, 1=use pixel
-	unsigned char *segmented;//segmented image buffer 0-9
+	//unsigned char *segmented;//segmented image buffer 0-9
 	unsigned char *bgr;//BGR buffer
 	unsigned short *pout;//Temp out buffer (for blobs)
 	int width, height, bpp;

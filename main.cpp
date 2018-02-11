@@ -7,6 +7,7 @@
 #include "FpsCounter.h"
 #include "SignalHandler.h"
 #include "xiApi.h"
+#include "SoccerBot.h"
 
 /** Use to init the clock */
 #define TIMER_INIT \
@@ -26,7 +27,6 @@
 
 FpsCounter *fpsCounter = nullptr;
 XimeaCamera *ximeaCamera = nullptr;
-Gui *gui = nullptr;
 Blobber *blobber = nullptr;
 
 unsigned char* rgb = new unsigned char[1280 * 1024 * 3];
@@ -55,14 +55,16 @@ void setupXimeaCamera(XimeaCamera* camera) {
     std::cout << "  > Available bandwidth: " << camera->getAvailableBandwidth() << std::endl;
 }
 
-void setupGui() {
+/*void setupGui() {
     gui = new Gui(GetModuleHandle(0), 1280, 1024);
-}
+}*/
 
 void run() {
     TIMER_INIT
 
     std::cout << "! Starting main loop" << std::endl;
+
+    Gui *gui = new Gui(GetModuleHandle(nullptr), blobber, 1280, 1024);
 
     bool running = true;
 
@@ -91,9 +93,9 @@ void run() {
         fpsCounter->step();
 
         if (showGui) {
-            if (gui == nullptr) {
+            /*if (gui == nullptr) {
                 setupGui();
-            }
+            }*/
 
             //gui->setFps(fpsCounter->getFps());
 
@@ -135,15 +137,37 @@ void run() {
                     rgb[(y * width + x) * 3 + 1] = g;
                     rgb[(y * width + x) * 3 + 2] = r;
 
-                    bgr[(y * halfWidth + x) * 3] = b;
+                    /*bgr[(y * halfWidth + x) * 3] = b;
                     bgr[(y * halfWidth + x) * 3 + 1] = g;
-                    bgr[(y * halfWidth + x) * 3 + 2] = r;
+                    bgr[(y * halfWidth + x) * 3 + 2] = r;*/
 
                     //rgb[(y * width + x) * 3] = 255;
                     //rgb[(y * width + x) * 3 + 1] = 0;
                     //rgb[(y * width + x) * 3 + 2] = 255;
                 }
             }
+
+            /*for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+//                    unsigned char b = *(blobber->segmented + (2 * y + 1) * width + 2 * x + 1);
+//                    unsigned char g = *(blobber->segmented + 2 * y * width + 2 * x + 1);
+//                    unsigned char r = *(blobber->segmented + 2 * y * width + 2 * x);
+
+                    unsigned char p = *(blobber->segmented + (y * width + x));
+
+                    //int drawX = x + halfWidth;
+                    int drawX = x;
+
+                    rgb[(y * width + drawX) * 3] = 0;
+                    rgb[(y * width + drawX) * 3 + 1] = 0;
+
+                    if (p == 1) {
+                        rgb[(y * width + drawX) * 3 + 2] = 255;
+                    } else {
+                        rgb[(y * width + drawX) * 3 + 2] = 0;
+                    }
+                }
+            }*/
 
             TIMER_START
 
@@ -162,16 +186,48 @@ void run() {
 
             std::cout << "blobCount " << blobInfo->count << std::endl;
 
+
+
             if (blobInfo->count > 0) {
-                std::cout << "blob " << blobInfo->blobs[0].area << " " << blobInfo->blobs[0].centerX << " "
-                          << blobInfo->blobs[0].centerY << std::endl;
+                for (int i = 0; i < blobInfo->count; i++) {
+                    //std::cout << "blob " << blobInfo->blobs[0].area << " " << blobInfo->blobs[0].centerX << " "
+                    //         << blobInfo->blobs[0].centerY << std::endl;
 
-                int x = blobInfo->blobs[0].centerX / 2;
-                int y = blobInfo->blobs[0].centerY / 2;
+                    int x = blobInfo->blobs[i].centerX / 2;
+                    int y = blobInfo->blobs[i].centerY / 2;
+                    int x1 = blobInfo->blobs[i].x1 / 2;
+                    int x2 = blobInfo->blobs[i].x2 / 2;
+                    int y1 = blobInfo->blobs[i].y1 / 2;
+                    int y2 = blobInfo->blobs[i].y2 / 2;
 
-                rgb[(y * width + x) * 3] = 0;
-                rgb[(y * width + x) * 3 + 1] = 0;
-                rgb[(y * width + x) * 3 + 2] = 255;
+                    for (int lineX = x1; lineX <= x2; lineX++) {
+                        rgb[(y1 * width + lineX) * 3] = 0;
+                        rgb[(y1 * width + lineX) * 3 + 1] = 0;
+                        rgb[(y1 * width + lineX) * 3 + 2] = 255;
+
+                        rgb[(y2 * width + lineX) * 3] = 0;
+                        rgb[(y2 * width + lineX) * 3 + 1] = 0;
+                        rgb[(y2 * width + lineX) * 3 + 2] = 255;
+                    }
+
+                    for (int lineY = y1; lineY <= y2; lineY++) {
+                        rgb[(lineY * width + x1) * 3] = 0;
+                        rgb[(lineY * width + x1) * 3 + 1] = 0;
+                        rgb[(lineY * width + x1) * 3 + 2] = 255;
+
+                        rgb[(lineY * width + x2) * 3] = 0;
+                        rgb[(lineY * width + x2) * 3 + 1] = 0;
+                        rgb[(lineY * width + x2) * 3 + 2] = 255;
+                    }
+
+                    for (int subX = x - 1; subX <= x + 1; subX++) {
+                        for (int subY = y - 1; subY <= y + 1; subY++) {
+                            rgb[(subY * width + subX) * 3] = 0;
+                            rgb[(subY * width + subX) * 3 + 1] = 0;
+                            rgb[(subY * width + subX) * 3 + 2] = 255;
+                        }
+                    }
+                }
             }
 
             /*for (int y = 0; y < height; y++) {
@@ -291,7 +347,7 @@ void run() {
     std::cout << "! Main loop ended" << std::endl;
 }
 
-int main() {
+/*int main() {
     fpsCounter = new FpsCounter();
 
     blobber = new Blobber();
@@ -301,7 +357,7 @@ int main() {
     for (int r = 0; r < 255; r++) {
         for (int g = 0; g < 255; g++) {
             for (int b = 0; b < 255; b++) {
-                if (r >= 100 && r <= 255 && g >= 130 && g <= 180 && b >= 100 && b <= 120) {
+                if (r >= 200 && r <= 255 && g >= 80 && g <= 110 && b >= 35 && b <= 60) {
                     blobberColors[b + (g << 8) + (r << 16)] = 1;
                 } else {
                     blobberColors[b + (g << 8) + (r << 16)] = 0;
@@ -315,8 +371,8 @@ int main() {
 
     blobber->start();
 
-    ximeaCamera = new XimeaCamera(857769553);
-    //ximeaCamera = new XimeaCamera(374363729);
+    //ximeaCamera = new XimeaCamera(857769553);
+    ximeaCamera = new XimeaCamera(374363729);
 
     ximeaCamera->open();
 
@@ -330,5 +386,17 @@ int main() {
     run();
 
     return 0;
+}*/
+
+int main() {
+    SoccerBot* soccerBot = new SoccerBot();
+
+    soccerBot->showGui = true;
+
+    soccerBot->setup();
+    soccerBot->run();
+
+    delete soccerBot;
+    soccerBot = NULL;
 }
 

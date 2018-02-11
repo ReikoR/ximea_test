@@ -1,13 +1,13 @@
 #ifndef MATHS_H
 #define MATHS_H
 
+#include "Config.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <vector>
 #include <queue>
 #include <numeric>
-#include <cstdlib>
-#include <ostream>
 
 #undef min
 #undef max
@@ -19,9 +19,6 @@ const float TWO_PI = 6.283185307f;
 const float E = 2.718f;
 
 static float max(float a, float b) {
-	return (a < b) ? b : a;
-}
-static double max(double a, double b) {
 	return (a < b) ? b : a;
 }
 
@@ -92,23 +89,13 @@ static float atan(float a) {
 static float exp(float a) {
     return ::exp(a);
 }
-static double exp(double a) {
-	return ::exp(a);
-}
 
 static float pow(float a, float b) {
     return ::pow(a, b);
 }
 
-static double pow(double a, double b) {
-	return ::pow(a, b);
-}
-
 static float sqrt(float a) {
     return ::sqrt(a);
-}
-static double sqrt(double a) {
-	return ::sqrt(a);
 }
 
 static float map(float value, float inMin, float inMax, float outMin, float outMax) {
@@ -124,8 +111,9 @@ static float map(float value, float inMin, float inMax, float outMin, float outM
 static float floatModulus(float a, float b) {
     return ::fmod(a, b);
 }
-static double floatModulus(double a, double b) {
-	return ::fmod(a, b);
+
+static float distanceBetween(float x1, float y1, float x2, float y2) {
+    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
 }
 
 static float getOffsetAngleBetween(float x1, float y1, float x2, float y2) {
@@ -207,10 +195,6 @@ static float randomGaussian(float deviation = 0.5f, float mean = 0.0f) {
 static float getGaussian(float mu, float sigma, float x) {
     return Math::exp(-Math::pow(mu - x,  2.0f) / Math::pow(sigma, 2.0f) / 2.0f) / Math::sqrt(2.0f * Math::PI * Math::pow(sigma, 2.0f));
 }
-static double getGaussian(double mu, double sigma, double x) {
-	return Math::exp(-Math::pow(mu - x, 2.0) / Math::pow(sigma, 2.0) / 2.0) / Math::sqrt(2.0 * Math::PI * Math::pow(sigma, 2.0));
-}
-
 
 class Matrix3x1;
 
@@ -286,90 +270,30 @@ class Matrix4x1 {
 };
 
 class Vector {
-public:
-	Vector() = default;
-	Vector(float x, float y) : x(x), y(y) {}
+    public:
+        Vector() : x(0), y(0) {}
+        Vector(float x, float y) : x(x), y(y) {}
 
-	float getLength() const;
-    float getAngle() const;
-    float distanceTo(const Vector& b) const;
-	float dotProduct(const Vector& b) const;
-	float getAngleBetween(const Vector& b) const;
-	Vector getRotated(float angle) const;
-    Vector getScaledTo(float length) const;
-    Vector getNormalized() const { return getScaledTo(1.0f); };
-    float dot(Vector& rhs) const { return x * rhs.x + y * rhs.y; };
-    float cross(Vector& rhs) const { return x * rhs.y - y * rhs.x; };
+        float getLength() const;
+		float distanceTo(const Vector& b) const;
+        float dotProduct(const Vector& b) const;
+        float getAngleBetween(const Vector& b) const;
+        Vector getRotated(float angle) const;
+        Vector getNormalized() const;
+        Vector getScaled(float magnitude) const;
+        Vector getSummed(const Vector& b) const;
 
-	Vector operator-() const { return Vector(-x, -y); };
-	Vector& operator-=(const Vector& other);
-	Vector& operator+=(const Vector& other);
-	Vector& operator*=(float magnitude);
-	Vector& operator/=(float divisor);
-	static Vector fromPolar(float dir, float magnitude = 1.0f);
+        static Vector createForwardVec(float dir, float magnitude = 1.0f);
+        static Vector createDirVec(const Vector& from, const Vector& to);
 
-	float x = 0.0f;
-	float y = 0.0f;
+        float x;
+        float y;
 };
 
-inline Vector operator-(Vector left, const Vector& right) {
-	return left -= right;
-}
-inline Vector operator+(Vector left, const Vector& right) {
-	return left += right;
-}
-inline Vector operator*(Vector left, float magnitude) {
-	return left *= magnitude;
-}
-inline Vector operator/(Vector left, float divisor) {
-	return left /= divisor;
-}
-inline bool operator>(const Vector &v1, const Vector &v2){
-	return v1.getLength() > v2.getLength();
-}
-inline bool operator<(const Vector &v1, const Vector &v2) {
-	return v1.getLength() < v2.getLength();
-}
-inline bool operator>=(const Vector &v1, const Vector &v2) {
-	return v1.getLength() >= v2.getLength();
-}
-inline bool operator<=(const Vector &v1, const Vector &v2) {
-	return v1.getLength() <= v2.getLength();
-}
+struct Position : public Math::Vector {
+    inline Position(float x = 0.0f, float y = 0.0f, float orientation = 0.0f) : Vector(x, y), orientation(orientation) {}
 
-inline std::ostream& operator<<(std::ostream& os, const Vector& vec) {
-	return os << "{\"x\":" << vec.x << ", \"y\":" << vec.y << "}";
-}
-
-static float getSlope(std::vector<Vector> points)
-{
-	int n = points.size();
-	std::vector<float> x;
-	std::vector<float> y;
-	for (int i = 0; i < n; i++)
-	{
-		x.push_back(points.at(i).x);
-		y.push_back(points.at(i).y);
-	}
-
-	float sX = (float)std::accumulate(x.begin(), x.end(), 0.0);
-	float sY = (float)std::accumulate(y.begin(), y.end(), 0.0);
-	float sXX = (float)std::inner_product(x.begin(), x.end(), x.begin(), 0.0);
-	float sXY = (float)std::inner_product(x.begin(), x.end(), y.begin(), 0.0);
-
-	float a = (n * sXY - sX * sY) / (n * sXX - sX * sX);
-
-	return a;
-}
-
-
-struct Position {
-	Position() = default;
-    Position(const Math::Vector &location, float orientation) : location(location), orientation(orientation) {}
-	Position(float x, float y, float orientation) : location(x, y), orientation(orientation) {}
-
-	Vector location;
-    float orientation = 0.0f;
+    float orientation;
 };
 
 typedef std::queue<Math::Position> PositionQueue;
@@ -402,8 +326,18 @@ class Rad : public Angle {
         float radians;
 };
 
-typedef std::vector<Vector> PointList;
-typedef std::vector<Vector>::iterator PointListIt;
+struct Point {
+    Point(float x, float y) : x(x), y(y) {}
+    Point() : x(0), y(0) {}
+    Point getRotated(float angle) const;
+    float getDistanceTo(Point other) const;
+
+    float x;
+    float y;
+};
+
+typedef std::vector<Point> PointList;
+typedef std::vector<Point>::iterator PointListIt;
 
 class Polygon {
 
@@ -412,11 +346,11 @@ public:
     Polygon(const PointList& points);
 
     void addPoint(float x, float y);
-    void addPoint(Vector point);
+    void addPoint(Point point);
     bool containsPoint(float x, float y) const;
     Polygon getTranslated(float dx, float dy) const;
     Polygon getScaled(float sx, float sy) const;
-	Polygon getRotated(float angle) const;
+    Polygon getRotated(float angle) const;
 	std::string toJSON();
 
 private:
@@ -463,9 +397,9 @@ private:
 
 };
 
-static float getAngleBetween(Math::Vector pointA, Math::Vector pointB, float orientationB) {
-	Vector forwardVec = Vector::fromPolar(orientationB);
-	Vector dirVec = pointA - pointB;
+static float getAngleBetween(Math::Position pointA, Math::Position pointB, float orientationB) {
+	Vector forwardVec = Vector::createForwardVec(orientationB);
+	Vector dirVec = Vector::createDirVec(pointA, pointB);
 
 	float angle = atan2(dirVec.y, dirVec.x) - atan2(forwardVec.y, forwardVec.x);
 
@@ -478,7 +412,7 @@ static float getAngleBetween(Math::Vector pointA, Math::Vector pointB, float ori
 	return angle;
 };
 
-static float getAcceleratedSpeed(float currentSpeed = 0.0f, float targetSpeed = 2.0f, float dt = 0.16666f, float acceleration = 2.0f) {
+static float getAcceleratedSpeed(float currentSpeed = 0.0f, float targetSpeed = Config::robotMaxApproachSpeed, float dt = 0.16666f, float acceleration = Config::robotMaxAcceleration) {
 	float speedDifference = targetSpeed - currentSpeed;
 	float maxChange = acceleration * dt;
 	float change;
@@ -493,7 +427,7 @@ static float getAcceleratedSpeed(float currentSpeed = 0.0f, float targetSpeed = 
 	return currentSpeed + change;
 }
 
-static float getAccelerationDistance(float currentSpeed, float finalSpeed, float acceleration = 2.0f) {
+static float getAccelerationDistance(float currentSpeed, float finalSpeed, float acceleration = Config::robotMaxAcceleration) {
 	if (finalSpeed < currentSpeed) {
 		acceleration *= -1.0f;
 	}

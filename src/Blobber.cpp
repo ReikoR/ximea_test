@@ -88,14 +88,18 @@ void Blobber::setColorMinArea(int color, int min_area) {
 
 void Blobber::setColors(unsigned char *data) {
 	//set colortable
-	//unsigned long size = min(0x1000000, (unsigned long)PyArray_NBYTES(lookup));
+	//unsigned long size = min2(0x1000000, (unsigned long)PyArray_NBYTES(lookup));
 	unsigned long size = 0x1000000;
 	memcpy(colors_lookup, data, size);
 }
 
+void Blobber::setPixelColor(unsigned char r, unsigned char g, unsigned char b, int color) {
+	colors_lookup[b + (g << 8) + (r << 16)] = color;
+}
+
 void Blobber::setActivePixels(unsigned char *data) {
 	//set colortable
-	//unsigned long size = min(MAX_WIDTH * MAX_HEIGHT, (unsigned long)PyArray_NBYTES(pixels));
+	//unsigned long size = min2(MAX_WIDTH * MAX_HEIGHT, (unsigned long)PyArray_NBYTES(pixels));
 	unsigned long size = MAX_WIDTH * MAX_HEIGHT;
 	memcpy(pixel_active, data, size);
 }
@@ -297,8 +301,8 @@ void Blobber::segExtractRegions() {
 				b = rmap[r.parent].parent;
 				rmap[i].parent = b; // update parent to identify region id
 				reg[b].area += r.width;
-				reg[b].x2 = max(r.x + r.width,reg[b].x2);
-				reg[b].x1 = min((int)r.x,reg[b].x1);
+				reg[b].x2 = max2(r.x + r.width,reg[b].x2);
+				reg[b].x1 = min2((int)r.x,reg[b].x1);
 				reg[b].y2 = r.y; // last set by lowest run
 				reg[b].cen_x += rangeSum(r.x,r.width);
 				reg[b].cen_y += r.y * r.width;
@@ -506,7 +510,7 @@ BlobInfo* Blobber::getBlobs(int color) {
 		cen_y = (unsigned short)round(list[i].cen_y);
 		//xy = cen_y * w + cen_x;
 
-        blobs[i].area = (unsigned short)min(65535 , list[i].area);
+        blobs[i].area = (unsigned short)min2(65535 , list[i].area);
         blobs[i].centerX = cen_x;
         blobs[i].centerY = cen_y;
         blobs[i].x1 = (unsigned short)list[i].x1;
