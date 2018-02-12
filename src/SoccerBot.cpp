@@ -164,11 +164,13 @@ void SoccerBot::run() {
 				}
 			}
 
+			memcpy(rgbData, rgb, static_cast<size_t>(3 * width * height));
+
 			blobber->analyse(f);
 
 			BlobInfo* blobInfo = blobber->getBlobs(1);
 
-			std::cout << "blobCount " << blobInfo->count << std::endl;
+			//std::cout << "blobCount " << blobInfo->count << std::endl;
 
 			if (blobInfo->count > 0) {
 				for (int i = 0; i < blobInfo->count; i++) {
@@ -212,7 +214,7 @@ void SoccerBot::run() {
 				}
 			}
 
-			gui->setFrontImages(rgb);
+			gui->setFrontImages(rgb, rgbData);
 
 			gui->update();
 
@@ -289,6 +291,7 @@ void SoccerBot::setupSignalHandler() {
 }
 
 void SoccerBot::setupVision() {
+	rgbData = new unsigned char[1280 * 1024 * 3];
 	rgb = new unsigned char[1280 * 1024 * 3];
 
 	blobber = new Blobber();

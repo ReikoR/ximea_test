@@ -93,8 +93,18 @@ void Blobber::setColors(unsigned char *data) {
 	memcpy(colors_lookup, data, size);
 }
 
-void Blobber::setPixelColor(unsigned char r, unsigned char g, unsigned char b, int color) {
+void Blobber::setPixelColor(unsigned char r, unsigned char g, unsigned char b, unsigned char color) {
 	colors_lookup[b + (g << 8) + (r << 16)] = color;
+}
+
+void Blobber::setPixelColorRange(ImageProcessor::RGBRange rgbRange, unsigned char color) {
+	for (unsigned int r = rgbRange.minR; r <= rgbRange.maxR; r++) {
+		for (unsigned int g = rgbRange.minG; g <= rgbRange.maxG; g++) {
+			for (unsigned int b = rgbRange.minB; b <= rgbRange.maxB; b++) {
+				colors_lookup[b + (g << 8) + (r << 16)] = color;
+			}
+		}
+	}
 }
 
 void Blobber::setActivePixels(unsigned char *data) {
@@ -400,6 +410,23 @@ BlobberRegion* Blobber::segSortRegions(BlobberRegion *list, int passes) {
 	}
 
 	return(list);
+}
+
+void Blobber::getSegmentedRgb(unsigned char* out) {
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			unsigned char p = *(segmented + (y * width + x));
+
+			out[(y * width + x) * 3] = 0;
+			out[(y * width + x) * 3 + 1] = 0;
+
+			if (p == 1) {
+				out[(y * width + x) * 3 + 2] = 255;
+			} else {
+				out[(y * width + x) * 3 + 2] = 0;
+			}
+		}
+	}
 }
 
 void Blobber::analyse(unsigned char *frame) {

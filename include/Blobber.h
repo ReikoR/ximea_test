@@ -37,6 +37,8 @@ Get blobs:
 	blobs = cam.getBlobs(1)
 */
 
+#include <ImageProcessor.h>
+
 #define MAX_WIDTH 1280
 #define MAX_HEIGHT 1024
 #define MAX_INT 2147483647
@@ -120,14 +122,13 @@ public:
 
 	void setColorMinArea(int color, int min_area);
 	void setColors(unsigned char *data);
-    void setPixelColor(unsigned char r, unsigned char g, unsigned char b, int color);
+    void setPixelColor(unsigned char r, unsigned char g, unsigned char b, unsigned char color);
+	void setPixelColorRange(ImageProcessor::RGBRange rgbRange, unsigned char color);
 	void setActivePixels(unsigned char *data);
 	void refreshSize();
 	void start();
 	void segEncodeRuns();
 	void segConnectComponents();
-
-
 
 	void segExtractRegions();
 	void segSeparateRegions();
@@ -135,6 +136,7 @@ public:
 	void analyse(unsigned char *frame);
 	BlobInfo* getBlobs(int color);
 
+	void getSegmentedRgb(unsigned char* out);
     unsigned char *segmented;//segmented image buffer 0-9
 
 private:

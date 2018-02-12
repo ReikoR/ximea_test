@@ -324,7 +324,7 @@ void run() {
                 }
             }*/
 
-            gui->setFrontImages(rgb);
+            //gui->setFrontImages(rgb);
 
             gui->update();
 

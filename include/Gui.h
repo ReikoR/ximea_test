@@ -67,7 +67,7 @@ public:
 	void addMouseListener(MouseListener* listener);
 	void setFps(int fps) { this->fps = fps; };
 	void setFrontImages(unsigned char* rgb, unsigned char* yuyv, unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, unsigned char* classification);
-	void setFrontImages(unsigned char* rgb);
+	void setFrontImages(unsigned char* rgb, unsigned char* rgbData);
 	void setRearImages(unsigned char* rgb, unsigned char* yuyv, unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, unsigned char* classification);
 	void onMouseMove(int x, int y, DisplayWindow* win);
 	void onMouseDown(int x, int y, MouseListener::MouseBtn btn, DisplayWindow* win);
@@ -80,7 +80,7 @@ public:
 
 private:
 	//void handleColorThresholding(unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, unsigned char* rgb, unsigned char* classification);
-	void handleColorThresholding(unsigned char* rgb);
+	void handleColorThresholding(unsigned char* rgbData, unsigned char* rgb);
 	void handleElements();
 	void onElementClick(Element* element);
 
@@ -89,6 +89,7 @@ private:
 	std::vector<MouseListener*> mouseListeners;
 	std::vector<DisplayWindow*> windows;
 	DisplayWindow* frontRGB;
+	DisplayWindow* frontClassification;
 	//DisplayWindow* rearRGB;
 	//DisplayWindow* frontClassification;
 	//DisplayWindow* rearClassification;
@@ -110,6 +111,7 @@ private:
 	bool quitRequested;
 	MouseListener::MouseBtn mouseBtn;
 	int brushRadius;
+	unsigned char* segmentedRgb;
 };
 
 #endif // GUI_H

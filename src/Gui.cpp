@@ -107,7 +107,10 @@ Gui::Gui(HINSTANCE instance, Blobber* blobber, int width, int height) : instance
 	mouseBtn = MouseListener::MouseBtn::LEFT;
 	brushRadius = 50;
 
+	segmentedRgb = new unsigned char[3 * width * height];
+
 	frontRGB = createWindow(width, height, "Camera 1 RGB");
+	frontClassification = createWindow(width, height, "Camera 1 classification");
 
 	selectedColorName = "";
 
@@ -213,29 +216,6 @@ void Gui::setFrontImages(unsigned char* rgb, unsigned char* yuyv, unsigned char*
 	DebugRenderer::renderFPS(rgb, fps);
 
 	drawElements(rgb, width, height);
-	drawElements(classification, width, height);
-	//drawMouse(frontCameraTranslator, rgb, width, height);
-
-	//if (activeWindow == frontClassification || activeWindow == frontRGB) {
-	if (activeWindow == frontRGB) {
-		if (!isMouseOverElement(mouseX, mouseY)) {
-			if (selectedColorName.length() > 0) {
-				//handleColorThresholding(dataY, dataU, dataV, rgb, classification);
-				handleColorThresholding(rgb);
-			}
-		} else {
-			handleElements();
-		}
-	}
-
-	frontRGB->setImage(rgb, true);
-	//frontClassification->setImage(classification, true);
-}
-
-void Gui::setFrontImages(unsigned char* rgb) {
-	DebugRenderer::renderFPS(rgb, fps);
-
-	drawElements(rgb, width, height);
 	//drawElements(classification, width, height);
 	//drawMouse(frontCameraTranslator, rgb, width, height);
 
@@ -244,7 +224,7 @@ void Gui::setFrontImages(unsigned char* rgb) {
 		if (!isMouseOverElement(mouseX, mouseY)) {
 			if (selectedColorName.length() > 0) {
 				//handleColorThresholding(dataY, dataU, dataV, rgb, classification);
-				handleColorThresholding(rgb);
+				//handleColorThresholding(rgbData, rgb);
 			}
 		} else {
 			handleElements();
@@ -252,7 +232,32 @@ void Gui::setFrontImages(unsigned char* rgb) {
 	}
 
 	frontRGB->setImage(rgb, true);
-	//frontClassification->setImage(classification, true);
+	frontClassification->setImage(classification, true);
+}
+
+void Gui::setFrontImages(unsigned char* rgb, unsigned char* rgbData) {
+	DebugRenderer::renderFPS(rgb, fps);
+
+	blobber->getSegmentedRgb(segmentedRgb);
+
+	drawElements(rgb, width, height);
+	//drawElements(rgb, width, height);
+	//drawMouse(frontCameraTranslator, rgb, width, height);
+
+	//if (activeWindow == frontClassification || activeWindow == frontRGB) {
+	if (activeWindow == frontRGB) {
+		if (!isMouseOverElement(mouseX, mouseY)) {
+			if (selectedColorName.length() > 0) {
+				//handleColorThresholding(dataY, dataU, dataV, rgb, classification);
+				handleColorThresholding(rgbData, rgb);
+			}
+		} else {
+			handleElements();
+		}
+	}
+
+	frontRGB->setImage(rgb, true);
+	frontClassification->setImage(segmentedRgb, true);
 }
 
 //void Gui::setRearImages(unsigned char* rgb, unsigned char* yuyv, unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, unsigned char* classification) {
@@ -278,20 +283,32 @@ void Gui::setFrontImages(unsigned char* rgb) {
 //}
 
 //void Gui::handleColorThresholding(unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, unsigned char* rgb, unsigned char* classification) {
-void Gui::handleColorThresholding(unsigned char* rgb) {
+void Gui::handleColorThresholding(unsigned char* rgbData, unsigned char* rgb) {
 	DebugRenderer::renderBrush(rgb, mouseX, mouseY, brushRadius, mouseDown);
 	//DebugRenderer::renderBrush(classification, mouseX, mouseY, brushRadius, mouseDown);
 
 	if (mouseDown) {
 		float stdDev = 2.0f;
 
-		//ImageProcessor::YUYVRange yuyvRange = ImageProcessor::extractColorRange(dataY, dataU, dataV, width, height, mouseX, mouseY, brushRadius, stdDev);
+		//ImageProcessor::RGBInfo rgbInfo = ImageProcessor::extractColors(rgbData, width, height, mouseX, mouseY, brushRadius, stdDev);
+		ImageProcessor::RGBRange rgbRange = ImageProcessor::extractColorRange(rgbData, width, height, mouseX, mouseY, brushRadius, stdDev);
+        std::cout << "rgbRange " << +rgbRange.minR << " " << +rgbRange.maxR << "; "
+                  << +rgbRange.minG << " " << +rgbRange.maxG << "; "
+                  << +rgbRange.minB << " " << +rgbRange.maxB << " " << std::endl;
 
-		if (mouseBtn == MouseListener::MouseBtn::LEFT) {
-            unsigned char b = rgb[mouseY * width + mouseX];
+        if (mouseBtn == MouseListener::MouseBtn::LEFT) {
+            /*unsigned char b = rgb[mouseY * width + mouseX];
             unsigned char g = rgb[mouseY * width + mouseX + 1];
             unsigned char r = rgb[mouseY * width + mouseX + 2];
-            blobber->setPixelColor(r, g, b, 1);
+            blobber->setPixelColor(r, g, b, 1);*/
+
+			/*for (int i = 0; i < rgbInfo.count; i++) {
+				ImageProcessor::RGBColor pixel = rgbInfo.pixels[i];
+				blobber->setPixelColor(pixel.r, pixel.g, pixel.b, 1);
+			}*/
+
+			blobber->setPixelColorRange(rgbRange, 1);
+
 
 			/*blobberFront->getColor(selectedColorName)->addThreshold(
 					yuyvRange.minY, yuyvRange.maxY,
@@ -307,6 +324,8 @@ void Gui::handleColorThresholding(unsigned char* rgb) {
 
 
 		} else if (mouseBtn == MouseListener::MouseBtn::RIGHT) {
+            blobber->setPixelColorRange(rgbRange, 0);
+
 			/*blobberFront->getColor(selectedColorName)->substractThreshold(
 					yuyvRange.minY, yuyvRange.maxY,
 					yuyvRange.minU, yuyvRange.maxU,
@@ -320,6 +339,17 @@ void Gui::handleColorThresholding(unsigned char* rgb) {
 		} else if (mouseBtn == MouseListener::MouseBtn::MIDDLE) {
 			/*blobberFront->clearColor(selectedColorName);
 			blobberRear->clearColor(selectedColorName);*/
+
+            ImageProcessor::RGBRange all = {
+                    .minR = 0,
+                    .maxR = 255,
+                    .minG = 0,
+                    .maxG = 255,
+                    .minB = 0,
+                    .maxB = 255
+            };
+
+            blobber->setPixelColorRange(all, 0);
 		}
 	}
 }
@@ -345,9 +375,9 @@ void Gui::onElementClick(Element* element) {
 	bool unset = false;
 
 	if (button != NULL) {
-		/*if (Util::duration(button->lastInteractionTime) < 0.2) {
+		if (Util::duration(button->lastInteractionTime) < 0.2) {
 			return;
-		}*/
+		}
 
 		button->lastInteractionTime = Util::millitime();
 

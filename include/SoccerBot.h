@@ -38,6 +38,7 @@ private:
 	float totalTime;
 	Dir debugCameraDir;
 	unsigned char* rgb;
+	unsigned char* rgbData;
 };
 
 #endif // SOCCERBOT_H

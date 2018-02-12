@@ -78,8 +78,7 @@ std::string Util::base64Encode(const unsigned char* data, unsigned int length) {
 }
 
 double Util::millitime() {
-	//return (double)timeGetTime() / 1000.0;
-    return 0.0;
+	return (double)timeGetTime() / 1000.0;
 }
 
 double Util::duration(double start) {

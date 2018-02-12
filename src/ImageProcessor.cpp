@@ -6,12 +6,13 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <Util.h>
 
 /*bool ImageProcessor::rgbToJpeg(unsigned char* input, unsigned char* output, int& bufferSize, int width, int height, int channels) {
 	return jpge::compress_image_to_jpeg_file_in_memory(output, bufferSize, width, height, channels, input);
 }*/
 
-ImageProcessor::YUYV* ImageProcessor::getYuyvPixelAt(unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, int width, int height, int x, int y) {
+ImageProcessor::RGBColor* ImageProcessor::getRgbPixelAt(unsigned char* rgb, int width, int height, int x, int y) {
 	if (
 		x < 0
 		|| x > width - 1
@@ -21,77 +22,150 @@ ImageProcessor::YUYV* ImageProcessor::getYuyvPixelAt(unsigned char* dataY, unsig
 		return NULL;
 	}
 
-	YUYV* pixel = new YUYV();
+	RGBColor* pixel = new RGBColor();
+	int bPosition = 3 * (y * width + x);
 
-	int strideY = width;
-	int strideU = (width + 1) / 2;
-	int strideV = (width + 1) / 2;
-
-	int yPos = strideY * y + x;
-	int uvPos = strideU * (y / 2) + (x / 2);
-
-	int stride = width * 1;
-
-	pixel->y1 = dataY[yPos];
-	pixel->u = dataU[uvPos];
-	pixel->y2 = dataY[yPos];
-	pixel->v = dataV[uvPos];
+	pixel->b = rgb[bPosition];
+	pixel->g = rgb[bPosition + 1];
+	pixel->r = rgb[bPosition + 2];
 
     return pixel;
 }
 
-ImageProcessor::YUYVRange ImageProcessor::extractColorRange(unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, int imageWidth, int imageHeight, int centerX, int centerY, int brushRadius, float stdDev) {
-	int Y, U, V;
-	std::vector<float> yValues;
-	std::vector<float> uValues;
-	std::vector<float> vValues;
+ImageProcessor::RGBInfo ImageProcessor::extractColors(unsigned char* rgb, int imageWidth, int imageHeight, int centerX, int centerY, int brushRadius, float stdDev) {
+    int R, G, B;
 
-	for (int x = -brushRadius; x < brushRadius; x++) {
-		int height = (int)::sqrt(brushRadius * brushRadius - x * x);
+    std::vector<float> rValues;
+    std::vector<float> gValues;
+    std::vector<float> bValues;
 
-		for (int y = -height; y < height; y++) {
-			if (
-				   x + centerX < 0
-				|| x + centerX > imageWidth - 1
-				|| y + centerY < 0
-				|| y + centerY > imageHeight - 1
-			) {
-				continue;
-			}
+    std::vector<RGBColor> filteredPixels;
+    std::vector<RGBColor> allPixels;
 
-			YUYV* pixel = getYuyvPixelAt(dataY, dataU, dataV, imageWidth, imageHeight, x + centerX, y + centerY);
+    for (int x = -brushRadius; x < brushRadius; x++) {
+        int height = (int)::sqrt(brushRadius * brushRadius - x * x);
 
-			if (pixel != NULL) {
-				Y = (pixel->y1 + pixel->y2) / 2;
-				U = pixel->u;
-				V = pixel->v;
+        for (int y = -height; y < height; y++) {
+            if (
+                    x + centerX < 0
+                    || x + centerX > imageWidth - 1
+                    || y + centerY < 0
+                    || y + centerY > imageHeight - 1
+                    ) {
+                continue;
+            }
 
-				delete pixel;
+            RGBColor* pixel = getRgbPixelAt(rgb, imageWidth, imageHeight, x + centerX, y + centerY);
 
-				yValues.push_back((float)Y);
-				uValues.push_back((float)U);
-				vValues.push_back((float)V);
-			} else {
-				std::cout << "- Didn't get pixel at " << (x + centerX) << "x" << (y + centerY) << std::endl;
-			}
-		}
-	}
+            if (pixel != NULL) {
+                allPixels.push_back(*(pixel));
 
-	float yMean, uMean, vMean;
-	float yStdDev = Math::standardDeviation(yValues, yMean);
-	float uStdDev = Math::standardDeviation(uValues, uMean);
-	float vStdDev = Math::standardDeviation(vValues, vMean);
+                R = pixel->r;
+                G = pixel->g;
+                B = pixel->b;
 
-	YUYVRange range;
+                delete pixel;
 
-	range.minY = (int)(yMean - (float)yStdDev * stdDev);
-	range.maxY = (int)(yMean + (float)yStdDev * stdDev);
-	range.minU = (int)(uMean - (float)uStdDev * stdDev);
-	range.maxU = (int)(uMean + (float)uStdDev * stdDev);
-	range.minV = (int)(vMean - (float)vStdDev * stdDev);
-	range.maxV = (int)(vMean + (float)vStdDev * stdDev);
+                rValues.push_back((float)R);
+                gValues.push_back((float)G);
+                bValues.push_back((float)B);
+            } else {
+                std::cout << "- Didn't get pixel at " << (x + centerX) << "x" << (y + centerY) << std::endl;
+            }
+        }
+    }
 
-	return range;
+    float rMean, gMean, bMean;
+    float rStdDev = Math::standardDeviation(rValues, rMean);
+    float gStdDev = Math::standardDeviation(gValues, gMean);
+    float bStdDev = Math::standardDeviation(bValues, bMean);
+
+    RGBRange range;
+
+    range.minR = (int)(rMean - (float)rStdDev * stdDev);
+    range.maxR = (int)(rMean + (float)rStdDev * stdDev);
+    range.minG = (int)(gMean - (float)gStdDev * stdDev);
+    range.maxG = (int)(gMean + (float)gStdDev * stdDev);
+    range.minB = (int)(bMean - (float)bStdDev * stdDev);
+    range.maxB = (int)(bMean + (float)bStdDev * stdDev);
+
+    for (unsigned int i = 0; i < allPixels.size(); i++) {
+        RGBColor pixel = allPixels.at(i);
+
+        if (range.isInRange(pixel)){
+            filteredPixels.push_back(pixel);
+        }
+    }
+
+    RGBColor* filteredPixelsArray = new RGBColor[filteredPixels.size()];
+
+    for (unsigned int i = 0; i < filteredPixels.size(); i++) {
+        filteredPixelsArray[i] = filteredPixels.at(i);
+    }
+
+    RGBInfo rgbInfo = {
+            .pixels = filteredPixelsArray,
+            .count = filteredPixels.size()
+    };
+
+    return rgbInfo;
+}
+
+ImageProcessor::RGBRange ImageProcessor::extractColorRange(unsigned char* rgb, int imageWidth, int imageHeight, int centerX, int centerY, int brushRadius, float stdDev) {
+    int R, G, B;
+
+    std::vector<float> rValues;
+    std::vector<float> gValues;
+    std::vector<float> bValues;
+
+    for (int x = -brushRadius; x < brushRadius; x++) {
+        int height = (int)::sqrt(brushRadius * brushRadius - x * x);
+
+        for (int y = -height; y < height; y++) {
+            if (
+                    x + centerX < 0
+                    || x + centerX > imageWidth - 1
+                    || y + centerY < 0
+                    || y + centerY > imageHeight - 1
+                    ) {
+                continue;
+            }
+
+            RGBColor* pixel = getRgbPixelAt(rgb, imageWidth, imageHeight, x + centerX, y + centerY);
+
+            if (pixel != NULL) {
+                R = pixel->r;
+                G = pixel->g;
+                B = pixel->b;
+
+                delete pixel;
+
+                rValues.push_back((float)R);
+                gValues.push_back((float)G);
+                bValues.push_back((float)B);
+            } else {
+                std::cout << "- Didn't get pixel at " << (x + centerX) << "x" << (y + centerY) << std::endl;
+            }
+        }
+    }
+
+    float rMean, gMean, bMean;
+    float rStdDev = Math::standardDeviation(rValues, rMean);
+    float gStdDev = Math::standardDeviation(gValues, gMean);
+    float bStdDev = Math::standardDeviation(bValues, bMean);
+
+    RGBRange range;
+
+    range.minR = (unsigned char)Util::limit(rMean - rStdDev * stdDev, 0, 255);
+    range.maxR = (unsigned char)Util::limit(rMean + rStdDev * stdDev, 0, 255);
+    range.minG = (unsigned char)Util::limit(gMean - gStdDev * stdDev, 0, 255);
+    range.maxG = (unsigned char)Util::limit(gMean + gStdDev * stdDev, 0, 255);
+    range.minB = (unsigned char)Util::limit(bMean - bStdDev * stdDev, 0, 255);
+    range.maxB = (unsigned char)Util::limit(bMean + bStdDev * stdDev, 0, 255);
+
+
+
+    return range;
 }
 
 bool ImageProcessor::saveBitmap(unsigned char* data, std::string filename, int size) {
