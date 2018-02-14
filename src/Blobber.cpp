@@ -466,55 +466,57 @@ void Blobber::analyse(unsigned char *frame) {
 
     unsigned char *f = frame;
 
-	//__int64 startTime = Util::timerStart();
+	__int64 startTime = Util::timerStart();
 
 	int w = width;
 	int h = height;
-	int y, x;
-	for (y=1; y < h-1; y += 2) {//threshold RGGB Bayer matrix
-		for (x = 1; x < w-1; x+=2) {//ignore sides
+	
+	#pragma omp parallel for
+	for (int y = 1; y < h - 1; y += 2) {//threshold RGGB Bayer matrix
+		for (int x = 1; x < w - 1; x += 2) {//ignore sides
 			//http://en.wikipedia.org/wiki/Bayer_filter
 			//current block is BGGR
 			//blue f[y*w+x],green1 f[y*w+x+1],green2 f[y*w+x+w],red f[y*w+x+w+1]
-			int xy = y*w+x;
+			int xy = y * w + x;
 			int b;//blue
 			int g;//green
 			int r;//red
-			
+
 			if (pixel_active[xy]) {
 				b = f[xy];
-				g = (f[xy-1]+f[xy+1]+f[xy-w]+f[xy+w]+2) >> 2;//left,right,up,down
-				r = (f[xy-w-1]+f[xy-w+1]+f[xy+w-1]+f[xy+w+1]+2) >> 2;//diagonal
+				//g = (f[xy-1]+f[xy+1]+f[xy-w]+f[xy+w]+2) >> 2;//left,right,up,down
+				g = f[xy - 1];//left,right,up,down
+				r = (f[xy - w - 1] + f[xy - w + 1] + f[xy + w - 1] + f[xy + w + 1] + 2) >> 2;//diagonal
 				segmented[xy] = colors_lookup[b + (g << 8) + (r << 16)];
 			}
-			
+
 			xy += 1;
 			if (pixel_active[xy]) {
-				b = (f[xy-1]+f[xy+1]+1) >> 1;//left,right
+				b = (f[xy - 1] + f[xy + 1] + 1) >> 1;//left,right
 				g = f[xy];
-				r = (f[xy-w]+f[xy+w]+1) >> 1;//up,down
+				r = (f[xy - w] + f[xy + w] + 1) >> 1;//up,down
 				segmented[xy] = colors_lookup[b + (g << 8) + (r << 16)];
 			}
-			
+
 			xy += w - 1;
 			if (pixel_active[xy]) {
-				b = (f[xy-w] + f[xy+w]+1) >> 1;//up,down
+				b = (f[xy - w] + f[xy + w] + 1) >> 1;//up,down
 				g = f[xy];
-				r = (f[xy-1]+f[xy+1]+1) >> 1;//left,right
+				r = (f[xy - 1] + f[xy + 1] + 1) >> 1;//left,right
 				segmented[xy] = colors_lookup[b + (g << 8) + (r << 16)];
 			}
-			
+
 			xy += 1;
 			if (pixel_active[xy]) {
-				b = (f[xy-w-1]+f[xy-w+1]+f[xy+w-1]+f[xy+w+1]+2) >> 2;//diagonal
-				g = (f[xy-1]+f[xy+1]+f[xy-w]+f[xy+w]+2) >> 2;//left,right,up,down
+				b = (f[xy - w - 1] + f[xy - w + 1] + f[xy + w - 1] + f[xy + w + 1] + 2) >> 2;//diagonal
+				g = (f[xy - 1] + f[xy + 1] + f[xy - w] + f[xy + w] + 2) >> 2;//left,right,up,down
 				r = f[xy];
 				segmented[xy] = colors_lookup[b + (g << 8) + (r << 16)];
 			}
 		}
 	}
 
-	//std::cout << "! Total time: " << Util::timerEnd(startTime) << std::endl;
+	std::cout << "! Total time: " << Util::timerEnd(startTime) << std::endl;
 
 	segEncodeRuns();
 	segConnectComponents();
@@ -522,7 +524,7 @@ void Blobber::analyse(unsigned char *frame) {
 	segSeparateRegions();
 
 	// do minimal number of passes sufficient to touch all set bits
-	y = 0;
+	int y = 0;
 	while( max_area != 0 ) {
 		max_area >>= CMV_RBITS;
 		y++;

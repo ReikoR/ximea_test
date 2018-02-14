@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 #set(CMAKE_CXX_FLAGS "-D_GLIBCXX_USE_CXX11_ABI=0")
 
+set(CMAKE_CXX_FLAGS "-fopenmp --std=gnu++11 ${CMAKE_CXX_FLAGS}")
+
 include_directories(include)
 include_directories(xiApi)
 
