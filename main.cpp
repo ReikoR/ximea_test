@@ -182,7 +182,7 @@ void run() {
 
             //running = false;
 
-            BlobInfo* blobInfo = blobber->getBlobs(1);
+            Blobber::BlobInfo* blobInfo = blobber->getBlobs(1);
 
             std::cout << "blobCount " << blobInfo->count << std::endl;
 

@@ -1,44 +1,12 @@
-/*
-Python wrapper for XIMEA camera, search for colored blobs
-Lauri Hamarik 2015
-Blob finding methods (starts with Seg) taken from CMVision
-	
-Needs xiAPI library:
-http://www.ximea.com/support/wiki/apis/XIMEA_Linux_Software_Package
-
-xiAPI installation:
-wget http://www.ximea.com/downloads/recent/XIMEA_Linux_SP.tgz
-tar xzf XIMEA_Linux_SP.tgz
-cd package
-./install -cam_usb30
-
-USAGE
-Grab image:
-	import numpy as np
-	import pyXiQ
-	cam = pyXiQ.Camera()
-	cam.start()
-	image = cam.image()
-Get blobs:
-	import numpy as np
-	import pyXiQ
-
-	cam = pyXiQ.Camera()
-	cam.setInt("exposure", 10000)
-	colors = np.zeros((256,256,256), dtype=np.uint8)
-	colors[0:200,1:201,2:202] = 1#select colors where blue=0..200, green=1..201, red=2..202
-	cam.setColors(colors)
-	cam.setColorMinArea(1, 100)#show only blobs larger than 100
-	cam.start()
-	cam.analyse()
-	blobs = cam.getBlobs(1)
-*/
 #include <cstdio>
 #include <memory.h>
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
 #include <array>
+#include <cstring>
+#include <utility>
+#include <Blobber.h>
 #include "Blobber.h"
 
 Blobber::Blobber() {
@@ -53,20 +21,65 @@ Blobber::Blobber() {
 	max_area = 0;
 	
 	int i;
-	for(i=0; i<COLOR_COUNT; i++) {
+	for (i = 0; i < COLOR_COUNT; i++) {
 		colors[i].list = NULL;
-		colors[i].num	= 0;
+		colors[i].num = 0;
 		colors[i].min_area = MAX_INT;
 		colors[i].color = i;
+
+        switch(i) {
+            case 1:
+                colors[i].name = const_cast<char *>("green");
+				colors[i].r = 19;
+				colors[i].g = 142;
+				colors[i].b = 34;
+                break;
+            case 2:
+                colors[i].name = const_cast<char *>("blue");
+				colors[i].r = 21;
+				colors[i].g = 106;
+				colors[i].b = 125;
+                break;
+            case 3:
+                colors[i].name = const_cast<char *>("magenta");
+				colors[i].r = 197;
+				colors[i].g = 77;
+				colors[i].b = 197;
+                break;
+            case 4:
+                colors[i].name = const_cast<char *>("orange");
+				colors[i].r = 236;
+				colors[i].g = 120;
+				colors[i].b = 38;
+                break;
+            case 5:
+                colors[i].name = const_cast<char *>("black");
+				colors[i].r = 66;
+				colors[i].g = 60;
+				colors[i].b = 60;
+                break;
+            case 6:
+                colors[i].name = const_cast<char *>("white");
+				colors[i].r = 255;
+				colors[i].g = 255;
+				colors[i].b = 255;
+                break;
+        }
 	}
-	
-	for (i=0; i<MAX_WIDTH * MAX_HEIGHT; i++) {
+
+	for (i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
 		pixel_active[i] = 1;
 	}
 }
 
 Blobber::~Blobber() {
 	//exit, free resources
+    if (saveColors("colors.dat")) {
+        std::cout << "! Colors saved" << std::endl;
+    } else {
+        std::cout << "! Colors not saved" << std::endl;
+    }
+
     if (segmented != NULL) {
         free(segmented);
     }
@@ -106,7 +119,6 @@ void Blobber::setPixelColorRange(ImageProcessor::RGBRange rgbRange, unsigned cha
 		}
 	}
 }
-
 void Blobber::setActivePixels(unsigned char *data) {
 	//set colortable
 	//unsigned long size = min2(MAX_WIDTH * MAX_HEIGHT, (unsigned long)PyArray_NBYTES(pixels));
@@ -346,7 +358,7 @@ void Blobber::segSeparateRegions() {
 	int area;
 	int num = region_c;
 	BlobberRegion *reg = regions;
-	color_class_state *color = colors;
+	ColorClassState *color = colors;
 
 	// clear out the region list head table
 	for(i=0; i<COLOR_COUNT; i++) {
@@ -370,7 +382,7 @@ void Blobber::segSeparateRegions() {
 	}
 }
 
-BlobberRegion* Blobber::segSortRegions(BlobberRegion *list, int passes) {
+Blobber::BlobberRegion* Blobber::segSortRegions(BlobberRegion *list, int passes) {
 // Sorts a list of regions by their area field.
 // Uses a linked list based radix sort to process the list.
 	BlobberRegion *tbl[CMV_RADIX]={NULL}, *p=NULL, *pn=NULL;
@@ -415,16 +427,19 @@ BlobberRegion* Blobber::segSortRegions(BlobberRegion *list, int passes) {
 void Blobber::getSegmentedRgb(unsigned char* out) {
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
-			unsigned char p = *(segmented + (y * width + x));
+			unsigned char colorIndex = *(segmented + (y * width + x));
 
-			out[(y * width + x) * 3] = 0;
-			out[(y * width + x) * 3 + 1] = 0;
-
-			if (p == 1) {
-				out[(y * width + x) * 3 + 2] = 255;
-			} else {
-				out[(y * width + x) * 3 + 2] = 0;
+			if (colorIndex > getColorCount()) {
+				continue;
 			}
+
+			unsigned char r = colors[colorIndex].r;
+			unsigned char g = colors[colorIndex].g;
+			unsigned char b = colors[colorIndex].b;
+
+			out[(y * width + x) * 3] = b;
+			out[(y * width + x) * 3 + 1] = g;
+			out[(y * width + x) * 3 + 2] = r;
 		}
 	}
 }
@@ -510,13 +525,12 @@ void Blobber::analyse(unsigned char *frame) {
 	passes = y;
 }
 
-BlobInfo* Blobber::getBlobs(int color) {
-	//get blobs for color, return numpy array [[distance,angle,area,cen_x,cen_y,x1,x2,y1,y2],...]
-
-	BlobberRegion *list = segSortRegions(colors[color].list, passes);
-	int rows = colors[color].num;
+Blobber::BlobInfo* Blobber::getBlobs(int colorIndex) {
+	ColorClassState color = colors[colorIndex];
+	BlobberRegion *list = segSortRegions(color.list, passes);
+	int rows = color.num;
 	//int cols = 7;
-	int i;
+	int i = 0;
 	//int n = 0;
 	int w = width;
 	//int xy;
@@ -532,19 +546,104 @@ BlobInfo* Blobber::getBlobs(int color) {
 		std::cout << "rows " << rows << std::endl;
 	}*/
 
-	for (i = 0; i < rows; i++) {
-		cen_x = (unsigned short)round(list[i].cen_x);
-		cen_y = (unsigned short)round(list[i].cen_y);
+	while (list != nullptr) {
+        cen_x = (unsigned short)round(list->cen_x);
+		cen_y = (unsigned short)round(list->cen_y);
 		//xy = cen_y * w + cen_x;
 
-        blobs[i].area = (unsigned short)min2(65535 , list[i].area);
+        blobs[i].area = (unsigned short)min2(65535 , list->area);
         blobs[i].centerX = cen_x;
         blobs[i].centerY = cen_y;
-        blobs[i].x1 = (unsigned short)list[i].x1;
-        blobs[i].x2 = (unsigned short)list[i].x2;
-        blobs[i].y1 = (unsigned short)list[i].y1;
-        blobs[i].y2 = (unsigned short)list[i].y2;
+        blobs[i].x1 = (unsigned short)list->x1;
+        blobs[i].x2 = (unsigned short)list->x2;
+        blobs[i].y1 = (unsigned short)list->y1;
+        blobs[i].y2 = (unsigned short)list->y2;
+
+        list = list->next;
+        i++;
 	}
 
 	return blobInfo;
+}
+
+bool Blobber::saveColors(std::string filename) {
+    FILE* file = fopen(filename.c_str(), "w");
+
+    if (!file) {
+        return false;
+    }
+
+    fwrite(colors_lookup, sizeof(char), sizeof(colors_lookup), file);
+
+    fclose(file);
+
+    return true;
+}
+
+bool Blobber::loadColors(std::string filename) {
+    FILE* file = fopen(filename.c_str(), "r");
+
+    if (!file) {
+        return false;
+    }
+
+    // obtain file size:
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell (file);
+    rewind(file);
+
+    if (fileSize != sizeof(colors_lookup)) {
+        return false;
+    }
+
+    fread(colors_lookup, sizeof(char), sizeof(colors_lookup), file);
+
+    fclose(file);
+
+    return true;
+}
+
+int Blobber::getColorCount() {
+    return sizeof(colors) / sizeof(Blobber::ColorClassState);
+}
+
+Blobber::ColorClassState* Blobber::getColor(int colorIndex) {
+    return &colors[colorIndex];
+}
+
+Blobber::ColorClassState* Blobber::getColor(std::string name) {
+	for (int i = 0; i < getColorCount(); i++) {
+		if (colors[i].name != NULL && strcmp(colors[i].name, name.c_str()) == 0) {
+			return &colors[i];
+		}
+	}
+
+	return NULL;
+}
+
+void Blobber::clearColors() {
+	memset(colors_lookup, 0, sizeof(colors_lookup));
+}
+
+void Blobber::clearColor(unsigned char colorIndex) {
+    std::cout << sizeof(long) << std::endl;
+    for (unsigned char &i : colors_lookup) {
+        if (i == colorIndex) {
+            i = 0;
+        }
+    }
+}
+
+void Blobber::clearColor(std::string colorName) {
+    ColorClassState* color = getColor(std::move(colorName));
+
+    if (color == NULL) {
+        return;
+    }
+
+    for (unsigned char &i : colors_lookup) {
+        if (i == color->color) {
+            i = 0;
+        }
+    }
 }

@@ -114,15 +114,18 @@ Gui::Gui(HINSTANCE instance, Blobber* blobber, int width, int height) : instance
 
 	selectedColorName = "";
 
-	/*Blobber::Color* color;
+	Blobber::ColorClassState* color;
 
-	for (int i = 0; i < blobberFront->getColorCount(); i++) {
-		color = blobberFront->getColor(i);
+	for (int i = 0, y = 0; i < blobber->getColorCount(); i++) {
+		color = blobber->getColor(i);
 
-		createButton(color->name, 20, 40 + i * 18, 160, 1);
-	}*/
+        if (color->name != NULL) {
+            createButton(color->name, 20, 40 + y * 18, 160, 1);
+            y++;
+        }
+	}
 
-	createButton("green", 20, 40, 160, 1);
+	//createButton("green", 20, 40, 160, 1);
 
 	createButton("Clear all", 20 + 160 + 10, 40, 100, 2);
 	clearSelectedBtn = createButton("Clear selected", 20 + 280 + 10, 40, 140, 3, false);
@@ -241,11 +244,11 @@ void Gui::setFrontImages(unsigned char* rgb, unsigned char* rgbData) {
 	blobber->getSegmentedRgb(segmentedRgb);
 
 	drawElements(rgb, width, height);
-	//drawElements(rgb, width, height);
+	drawElements(segmentedRgb, width, height);
 	//drawMouse(frontCameraTranslator, rgb, width, height);
 
 	//if (activeWindow == frontClassification || activeWindow == frontRGB) {
-	if (activeWindow == frontRGB) {
+	if (activeWindow == frontRGB || activeWindow == frontClassification) {
 		if (!isMouseOverElement(mouseX, mouseY)) {
 			if (selectedColorName.length() > 0) {
 				//handleColorThresholding(dataY, dataU, dataV, rgb, classification);
@@ -285,7 +288,7 @@ void Gui::setFrontImages(unsigned char* rgb, unsigned char* rgbData) {
 //void Gui::handleColorThresholding(unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, unsigned char* rgb, unsigned char* classification) {
 void Gui::handleColorThresholding(unsigned char* rgbData, unsigned char* rgb) {
 	DebugRenderer::renderBrush(rgb, mouseX, mouseY, brushRadius, mouseDown);
-	//DebugRenderer::renderBrush(classification, mouseX, mouseY, brushRadius, mouseDown);
+	DebugRenderer::renderBrush(segmentedRgb, mouseX, mouseY, brushRadius, mouseDown);
 
 	if (mouseDown) {
 		float stdDev = 2.0f;
@@ -307,49 +310,16 @@ void Gui::handleColorThresholding(unsigned char* rgbData, unsigned char* rgb) {
 				blobber->setPixelColor(pixel.r, pixel.g, pixel.b, 1);
 			}*/
 
-			blobber->setPixelColorRange(rgbRange, 1);
+            Blobber::ColorClassState* selectedColor = blobber->getColor(selectedColorName);
 
-
-			/*blobberFront->getColor(selectedColorName)->addThreshold(
-					yuyvRange.minY, yuyvRange.maxY,
-					yuyvRange.minU, yuyvRange.maxU,
-					yuyvRange.minV, yuyvRange.maxV
-			);
-			blobberRear->getColor(selectedColorName)->addThreshold(
-					yuyvRange.minY, yuyvRange.maxY,
-					yuyvRange.minU, yuyvRange.maxU,
-					yuyvRange.minV, yuyvRange.maxV
-			);*/
-
-
+            if (selectedColor != NULL) {
+                blobber->setPixelColorRange(rgbRange, selectedColor->color);
+            }
 
 		} else if (mouseBtn == MouseListener::MouseBtn::RIGHT) {
             blobber->setPixelColorRange(rgbRange, 0);
-
-			/*blobberFront->getColor(selectedColorName)->substractThreshold(
-					yuyvRange.minY, yuyvRange.maxY,
-					yuyvRange.minU, yuyvRange.maxU,
-					yuyvRange.minV, yuyvRange.maxV
-			);
-			blobberRear->getColor(selectedColorName)->substractThreshold(
-					yuyvRange.minY, yuyvRange.maxY,
-					yuyvRange.minU, yuyvRange.maxU,
-					yuyvRange.minV, yuyvRange.maxV
-			);*/
 		} else if (mouseBtn == MouseListener::MouseBtn::MIDDLE) {
-			/*blobberFront->clearColor(selectedColorName);
-			blobberRear->clearColor(selectedColorName);*/
-
-            ImageProcessor::RGBRange all = {
-                    .minR = 0,
-                    .maxR = 255,
-                    .minG = 0,
-                    .maxG = 255,
-                    .minB = 0,
-                    .maxB = 255
-            };
-
-            blobber->setPixelColorRange(all, 0);
+            blobber->clearColor(selectedColorName);
 		}
 	}
 }
@@ -415,11 +385,9 @@ void Gui::onElementClick(Element* element) {
 				}
 			}
 		} else if (button->type == 2) {
-			//blobberFront->clearColors();
-			//blobberRear->clearColors();
+            blobber->clearColors();
 		} else if (button->type == 3) {
-			//blobberFront->clearColor(selectedColorName);
-			//blobberRear->clearColor(selectedColorName);
+            blobber->clearColor(selectedColorName);
 		}
 		else if (button->type == 4) {
 			quitRequested = true;

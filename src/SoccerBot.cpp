@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <Blobber.h>
 
 SoccerBot::SoccerBot() :
 	frontCamera(NULL),
@@ -29,6 +30,7 @@ SoccerBot::~SoccerBot() {
 
 	if (gui != NULL) delete gui; gui = NULL;
 	if (frontCamera != NULL) delete frontCamera; frontCamera = NULL;
+    if (blobber != NULL) delete blobber; blobber = NULL;
 
 	std::cout << "! Resources freed" << std::endl;
 }
@@ -168,51 +170,65 @@ void SoccerBot::run() {
 
 			blobber->analyse(f);
 
-			BlobInfo* blobInfo = blobber->getBlobs(1);
+            for (int colorIndex = 0; colorIndex < blobber->getColorCount(); colorIndex++) {
+                Blobber::ColorClassState* color = blobber->getColor(colorIndex);
+
+                if (color->name == nullptr) {
+                    continue;
+                }
+
+                Blobber::BlobInfo* blobInfo = blobber->getBlobs(colorIndex);
+
+                if (blobInfo->count > 0) {
+                    unsigned char r = color->r;
+                    unsigned char g = color->g;
+                    unsigned char b = color->b;
+
+                    for (int i = 0; i < blobInfo->count; i++) {
+                        //std::cout << "blob " << blobInfo->blobs[0].area << " " << blobInfo->blobs[0].centerX << " "
+                        //         << blobInfo->blobs[0].centerY << std::endl;
+
+                        Blobber::Blob blob = blobInfo->blobs[i];
+
+                        int x = blob.centerX;
+                        int y = blob.centerY;
+                        int x1 = blob.x1;
+                        int x2 = blob.x2;
+                        int y1 = blob.y1;
+                        int y2 = blob.y2;
+
+                        for (int lineX = x1; lineX <= x2; lineX++) {
+                            rgb[(y1 * width + lineX) * 3] = b;
+                            rgb[(y1 * width + lineX) * 3 + 1] = g;
+                            rgb[(y1 * width + lineX) * 3 + 2] = r;
+
+                            rgb[(y2 * width + lineX) * 3] = b;
+                            rgb[(y2 * width + lineX) * 3 + 1] = g;
+                            rgb[(y2 * width + lineX) * 3 + 2] = r;
+                        }
+
+                        for (int lineY = y1; lineY <= y2; lineY++) {
+                            rgb[(lineY * width + x1) * 3] = b;
+                            rgb[(lineY * width + x1) * 3 + 1] = g;
+                            rgb[(lineY * width + x1) * 3 + 2] = r;
+
+                            rgb[(lineY * width + x2) * 3] = b;
+                            rgb[(lineY * width + x2) * 3 + 1] = g;
+                            rgb[(lineY * width + x2) * 3 + 2] = r;
+                        }
+
+                        for (int subX = x - 1; subX <= x + 1; subX++) {
+                            for (int subY = y - 1; subY <= y + 1; subY++) {
+                                rgb[(subY * width + subX) * 3] = b;
+                                rgb[(subY * width + subX) * 3 + 1] = g;
+                                rgb[(subY * width + subX) * 3 + 2] = r;
+                            }
+                        }
+                    }
+                }
+            }
 
 			//std::cout << "blobCount " << blobInfo->count << std::endl;
-
-			if (blobInfo->count > 0) {
-				for (int i = 0; i < blobInfo->count; i++) {
-					//std::cout << "blob " << blobInfo->blobs[0].area << " " << blobInfo->blobs[0].centerX << " "
-					//         << blobInfo->blobs[0].centerY << std::endl;
-
-					int x = blobInfo->blobs[i].centerX;
-					int y = blobInfo->blobs[i].centerY;
-					int x1 = blobInfo->blobs[i].x1;
-					int x2 = blobInfo->blobs[i].x2;
-					int y1 = blobInfo->blobs[i].y1;
-					int y2 = blobInfo->blobs[i].y2;
-
-					for (int lineX = x1; lineX <= x2; lineX++) {
-						rgb[(y1 * width + lineX) * 3] = 0;
-						rgb[(y1 * width + lineX) * 3 + 1] = 0;
-						rgb[(y1 * width + lineX) * 3 + 2] = 255;
-
-						rgb[(y2 * width + lineX) * 3] = 0;
-						rgb[(y2 * width + lineX) * 3 + 1] = 0;
-						rgb[(y2 * width + lineX) * 3 + 2] = 255;
-					}
-
-					for (int lineY = y1; lineY <= y2; lineY++) {
-						rgb[(lineY * width + x1) * 3] = 0;
-						rgb[(lineY * width + x1) * 3 + 1] = 0;
-						rgb[(lineY * width + x1) * 3 + 2] = 255;
-
-						rgb[(lineY * width + x2) * 3] = 0;
-						rgb[(lineY * width + x2) * 3 + 1] = 0;
-						rgb[(lineY * width + x2) * 3 + 2] = 255;
-					}
-
-					for (int subX = x - 1; subX <= x + 1; subX++) {
-						for (int subY = y - 1; subY <= y + 1; subY++) {
-							rgb[(subY * width + subX) * 3] = 0;
-							rgb[(subY * width + subX) * 3 + 1] = 0;
-							rgb[(subY * width + subX) * 3 + 2] = 255;
-						}
-					}
-				}
-			}
 
 			gui->setFrontImages(rgb, rgbData);
 
@@ -296,22 +312,13 @@ void SoccerBot::setupVision() {
 
 	blobber = new Blobber();
 
-	unsigned char* blobberColors = new unsigned char[0x1000000];
-
-	for (int r = 0; r < 255; r++) {
-		for (int g = 0; g < 255; g++) {
-			for (int b = 0; b < 255; b++) {
-				if (r >= 200 && r <= 255 && g >= 80 && g <= 110 && b >= 35 && b <= 60) {
-					blobberColors[b + (g << 8) + (r << 16)] = 1;
-				} else {
-					blobberColors[b + (g << 8) + (r << 16)] = 0;
-				}
-			}
-		}
-	}
-
-	blobber->setColors(blobberColors);
+    blobber->loadColors("colors.dat");
 	blobber->setColorMinArea(1, 100);
+	blobber->setColorMinArea(2, 100);
+	blobber->setColorMinArea(3, 100);
+	blobber->setColorMinArea(4, 100);
+	blobber->setColorMinArea(5, 100);
+	blobber->setColorMinArea(6, 100);
 
 	blobber->start();
 }

@@ -59,45 +59,6 @@ Get blobs:
 		__typeof__ (b) _b = (b); \
 		_a < _b ? _a : _b; })
 
-typedef struct {
-    short x, y, width;
-    unsigned char color;
-    int parent, next;
-} BlobberRun;
-
-typedef struct BlobberRegion {
-    int color;
-    int x1, y1, x2, y2;
-    float cen_x, cen_y;
-    int area;
-    int run_start;
-    int iterator_id;
-    struct BlobberRegion* next;
-} BlobberRegion;
-
-typedef struct {
-    BlobberRegion *list;
-    int num;
-    int min_area;
-    unsigned char color;
-    char *name;
-} color_class_state;
-
-typedef struct Blob {
-    unsigned short area;
-    unsigned short centerX;
-    unsigned short centerY;
-    unsigned short x1;
-    unsigned short x2;
-    unsigned short y1;
-    unsigned short y2;
-} Blob;
-
-typedef struct BlobInfo {
-    Blob* blobs;
-    unsigned short count;
-} BlobInfo;
-
 /*typedef struct {
     unsigned char colors_lookup[0x1000000];//all possible bgr combinations lookup table/
     unsigned char pixel_active[MAX_WIDTH * MAX_HEIGHT];//0=ignore in segmentation, 1=use pixel
@@ -120,6 +81,48 @@ public:
 	Blobber();
 	~Blobber();
 
+	typedef struct {
+		short x, y, width;
+		unsigned char color;
+		int parent, next;
+	} BlobberRun;
+
+	typedef struct BlobberRegion {
+		int color;
+		int x1, y1, x2, y2;
+		float cen_x, cen_y;
+		int area;
+		int run_start;
+		int iterator_id;
+		struct BlobberRegion* next;
+	} BlobberRegion;
+
+	typedef struct {
+		BlobberRegion *list;
+		int num;
+		int min_area;
+		unsigned char color;
+		char *name;
+		unsigned char r;
+		unsigned char g;
+		unsigned char b;
+	} ColorClassState;
+
+	typedef struct Blob {
+		unsigned short area;
+		unsigned short centerX;
+		unsigned short centerY;
+		unsigned short x1;
+		unsigned short x2;
+		unsigned short y1;
+		unsigned short y2;
+	} Blob;
+
+	typedef struct BlobInfo {
+		Blob* blobs;
+		unsigned short count;
+	} BlobInfo;
+
 	void setColorMinArea(int color, int min_area);
 	void setColors(unsigned char *data);
     void setPixelColor(unsigned char r, unsigned char g, unsigned char b, unsigned char color);
@@ -139,6 +142,17 @@ public:
 	void getSegmentedRgb(unsigned char* out);
     unsigned char *segmented;//segmented image buffer 0-9
 
+	bool saveColors(std::string filename);
+    bool loadColors(std::string filename);
+
+    int getColorCount();
+    ColorClassState* getColor(int colorIndex);
+    ColorClassState* getColor(std::string name);
+
+	void clearColors();
+	void clearColor(unsigned char colorIndex);
+	void clearColor(std::string colorName);
+
 private:
 	int rangeSum(int x, int w);
 
@@ -151,7 +165,7 @@ private:
 
 	BlobberRun rle[MAX_RUNS];
 	BlobberRegion regions[MAX_REG];
-	color_class_state colors[COLOR_COUNT];
+	ColorClassState colors[COLOR_COUNT];
 	int run_c;
 	int region_c;
 	int max_area;
