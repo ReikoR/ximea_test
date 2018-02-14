@@ -22,33 +22,42 @@ void DebugRenderer::renderBlobs(unsigned char* image, Blobber* blobber, int widt
 	canvas.width = width;
 	canvas.height = height;
 
-	/*for (int i = 0; i < blobber->getColorCount(); i++) {
-		Blobber::Color* color = blobber->getColor(i);
+	for (int colorIndex = 0; colorIndex < blobber->getColorCount(); colorIndex++) {
+		Blobber::ColorClassState* color = blobber->getColor(colorIndex);
 
-		if (color == NULL) {
+		if (color == nullptr || color->name == nullptr) {
 			continue;
 		}
 
 		if (
-				strcmp(color->name, "ball") != 0
-				&& strcmp(color->name, "yellow-goal") != 0
-				&& strcmp(color->name, "blue-goal") != 0
+				strcmp(color->name, "green") != 0
+				&& strcmp(color->name, "blue") != 0
+				&& strcmp(color->name, "magenta") != 0
 				) {
 			continue;
 		}
 
-		Blobber::Blob* blob = blobber->getBlobs(color->name);
+		Blobber::BlobInfo* blobInfo = blobber->getBlobs(colorIndex);
 
-		while (blob != NULL) {
-			canvas.drawBoxCentered(
-					(int)blob->centerX, (int)blob->centerY,
-					blob->x2 - blob->x1, blob->y2 - blob->y1,
-					color->color.red, color->color.green, color->color.blue
-			);
+		if (blobInfo->count > 0) {
+			unsigned char r = color->r;
+			unsigned char g = color->g;
+			unsigned char b = color->b;
 
-			blob = blob->next;
+			for (int i = 0; i < blobInfo->count; i++) {
+				//std::cout << "blob " << blobInfo->blobs[0].area << " " << blobInfo->blobs[0].centerX << " "
+				//         << blobInfo->blobs[0].centerY << std::endl;
+
+				Blobber::Blob blob = blobInfo->blobs[i];
+
+				canvas.drawBoxCentered(
+					(int)blob.centerX, (int)blob.centerY,
+					blob.x2 - blob.x1, blob.y2 - blob.y1,
+					r, g, b
+				);
+			}
 		}
-	}*/
+	}
 }
 
 void DebugRenderer::renderBalls(unsigned char* image, Vision* vision, const ObjectList& balls, int width, int height) {

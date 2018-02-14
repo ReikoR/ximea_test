@@ -8,6 +8,7 @@
 #include "Canvas.h"
 #include "MouseListener.h"
 #include "Config.h"
+#include "BaseCamera.h"
 #include <vector>
 #include <string>
 
@@ -59,6 +60,7 @@ public:
 
 	DisplayWindow* createWindow(int width, int height, std::string name);
 	Button* createButton(std::string text, int x, int y, int width = 0, int type = 0, bool visible = true, void* data = NULL);
+	void processFrame(BaseCamera::Frame *frame);
 	void drawElements(unsigned char* image, int width, int height);
 	void drawMouse(CameraTranslator* cameraTranslator, unsigned char* image, int width, int height);
 	bool isMouseOverElement(int x, int y);
@@ -112,6 +114,9 @@ private:
 	MouseListener::MouseBtn mouseBtn;
 	int brushRadius;
 	unsigned char* segmentedRgb;
+
+	unsigned char* rgb;
+	unsigned char* rgbData;
 };
 
 #endif // GUI_H

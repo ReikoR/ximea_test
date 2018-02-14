@@ -107,6 +107,8 @@ Gui::Gui(HINSTANCE instance, Blobber* blobber, int width, int height) : instance
 	mouseBtn = MouseListener::MouseBtn::LEFT;
 	brushRadius = 50;
 
+    rgbData = new unsigned char[3 * width * height];
+    rgb = new unsigned char[3 * width * height];
 	segmentedRgb = new unsigned char[3 * width * height];
 
 	frontRGB = createWindow(width, height, "Camera 1 RGB");
@@ -165,6 +167,46 @@ Gui::Button* Gui::createButton(std::string text, int x, int y, int width, int ty
 	return button;
 }
 
+void Gui::processFrame(BaseCamera::Frame *frame) {
+    unsigned char* f = frame->data;
+    int w = width;
+    int h = height;
+    unsigned char* p = rgb;
+
+    for (int y=1; y < h-1; y += 2) {//ignore sides
+        for (int x = 1; x < w-1; x+=2) {
+            //http://en.wikipedia.org/wiki/Bayer_filter
+            //current block is BGGR
+            //blue f[y*w+x],green1 f[y*w+x+1],green2 f[y*w+x+w],red f[y*w+x+w+1]
+            int xy = y*w+x;
+            int txy = xy*3;
+
+            p[txy++] = f[xy];
+            p[txy++] = (f[xy-1]+f[xy+1]+f[xy-w]+f[xy+w]+2) >> 2;//left,right,up,down
+            p[txy++] = (f[xy-w-1]+f[xy-w+1]+f[xy+w-1]+f[xy+w+1]+2) >> 2;//diagonal
+
+            xy += 1;
+            p[txy++] = (f[xy-1]+f[xy+1]+1) >> 1;//left,right
+            p[txy++] = f[xy];
+            p[txy++] = (f[xy-w]+f[xy+w]+1) >> 1;//up,down
+
+            xy += w - 1;
+            txy = xy * 3;
+            p[txy++] = (f[xy-w] + f[xy+w]+1) >> 1;//up,down
+            p[txy++] = f[xy];
+            p[txy++] = (f[xy-1]+f[xy+1]+1) >> 1;//left,right
+
+            xy += 1;
+            p[txy++] = (f[xy-w-1]+f[xy-w+1]+f[xy+w-1]+f[xy+w+1]+2) >> 2;//diagonal
+            p[txy++] = (f[xy-1]+f[xy+1]+f[xy-w]+f[xy+w]+2) >> 2;//left,right,up,down
+            p[txy]   = f[xy];
+        }
+    }
+
+    memcpy(rgbData, rgb, static_cast<size_t>(3 * width * height));
+}
+
+
 void Gui::drawElements(unsigned char* image, int width, int height) {
 	for (std::vector<Element*>::const_iterator i = elements.begin(); i != elements.end(); i++) {
 		(*i)->draw(image, width, height);
@@ -198,6 +240,8 @@ bool Gui::isMouseOverElement(int x, int y) {
 }
 
 bool Gui::update() {
+    setFrontImages(rgb, rgbData);
+
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) != 0) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -240,6 +284,7 @@ void Gui::setFrontImages(unsigned char* rgb, unsigned char* yuyv, unsigned char*
 
 void Gui::setFrontImages(unsigned char* rgb, unsigned char* rgbData) {
 	DebugRenderer::renderFPS(rgb, fps);
+    DebugRenderer::renderBlobs(rgb, blobber, width, height);
 
 	blobber->getSegmentedRgb(segmentedRgb);
 

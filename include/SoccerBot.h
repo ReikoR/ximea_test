@@ -2,6 +2,7 @@
 #define SOCCERBOT_H
 
 #include "Vision.h"
+#include "FpsCounter.h"
 #include <string>
 
 class XimeaCamera;
@@ -21,6 +22,7 @@ public:
 	void setupSignalHandler();
 	void setupGui();
 	void setupVision();
+	void setupFpsCounter();
 
 	bool debugVision;
 	bool showGui;
@@ -31,14 +33,13 @@ private:
 	XimeaCamera* frontCamera;
 	Gui* gui;
 	Blobber* blobber;
+	FpsCounter* fpsCounter;
 
 	bool running;
 	float dt;
 	double lastStepTime;
 	float totalTime;
 	Dir debugCameraDir;
-	unsigned char* rgb;
-	unsigned char* rgbData;
 };
 
 #endif // SOCCERBOT_H

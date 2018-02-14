@@ -7,6 +7,7 @@
 #include <cstring>
 #include <utility>
 #include <Blobber.h>
+#include <Util.h>
 #include "Blobber.h"
 
 Blobber::Blobber() {
@@ -465,6 +466,8 @@ void Blobber::analyse(unsigned char *frame) {
 
     unsigned char *f = frame;
 
+	//__int64 startTime = Util::timerStart();
+
 	int w = width;
 	int h = height;
 	int y, x;
@@ -510,7 +513,9 @@ void Blobber::analyse(unsigned char *frame) {
 			}
 		}
 	}
-	
+
+	//std::cout << "! Total time: " << Util::timerEnd(startTime) << std::endl;
+
 	segEncodeRuns();
 	segConnectComponents();
 	segExtractRegions();
