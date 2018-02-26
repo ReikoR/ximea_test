@@ -189,7 +189,7 @@ void VisionManager::setupXimeaCamera(std::string name, XimeaCamera* camera) {
 	camera->setAutoExposureGain(false);
 	//camera->setLuminosityGamma(1.0f);
 	//camera->setWhiteBalanceBlue(1.0f); // TODO check
-	//camera->setQueueSize(12); // TODO Affects anything?
+	camera->setQueueSize(1);
 
 	std::cout << "! " << name << " camera info:" << std::endl;
 	std::cout << "  > Name: " << camera->getName() << std::endl;
