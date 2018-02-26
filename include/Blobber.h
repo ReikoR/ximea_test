@@ -1,42 +1,6 @@
 #ifndef XIMEA_TEST_BLOBBER_H
 #define XIMEA_TEST_BLOBBER_H
 
-/*
-Python wrapper for XIMEA camera, search for colored blobs
-Lauri Hamarik 2015
-Blob finding methods (starts with Seg) taken from CMVision
-
-Needs xiAPI library:
-http://www.ximea.com/support/wiki/apis/XIMEA_Linux_Software_Package
-
-xiAPI installation:
-wget http://www.ximea.com/downloads/recent/XIMEA_Linux_SP.tgz
-tar xzf XIMEA_Linux_SP.tgz
-cd package
-./install -cam_usb30
-
-USAGE
-Grab image:
-	import numpy as np
-	import pyXiQ
-	cam = pyXiQ.Camera()
-	cam.start()
-	image = cam.image()
-Get blobs:
-	import numpy as np
-	import pyXiQ
-
-	cam = pyXiQ.Camera()
-	cam.setInt("exposure", 10000)
-	colors = np.zeros((256,256,256), dtype=np.uint8)
-	colors[0:200,1:201,2:202] = 1#select colors where blue=0..200, green=1..201, red=2..202
-	cam.setColors(colors)
-	cam.setColorMinArea(1, 100)#show only blobs larger than 100
-	cam.start()
-	cam.analyse()
-	blobs = cam.getBlobs(1)
-*/
-
 #include <ImageProcessor.h>
 
 #define MAX_WIDTH 1280
