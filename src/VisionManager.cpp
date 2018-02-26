@@ -5,6 +5,7 @@
 #include "SignalHandler.h"
 #include "Util.h"
 #include <algorithm>
+#include <json.hpp>
 
 VisionManager::VisionManager() :
 	frontCamera(nullptr),
@@ -134,6 +135,8 @@ void VisionManager::run() {
 			std::cout << "! FPS: " << fpsCounter->getFps() << std::endl;
 		}*/
 
+		sendState();
+
 		lastStepTime = time;
 
 		if (SignalHandler::exitRequested) {
@@ -217,10 +220,64 @@ void VisionManager::setupVision() {
 	blobber->setColorMinArea(6, 100);
 
 	blobber->start();
+}
 
 void VisionManager::setupHubCom() {
 	hubCom = new HubCom("127.0.0.1", 8092, 8091);
 
 	hubCom->run();
 }
+
+void VisionManager::sendState() {
+	//__int64 startTime = Util::timerStart();
+
+	nlohmann::json j;
+
+	j["type"] = "vision";
+	j["blobs"] = nlohmann::json::object();
+
+	for (int colorIndex = 0; colorIndex < blobber->getColorCount(); colorIndex++) {
+		Blobber::ColorClassState* color = blobber->getColor(colorIndex);
+
+		if (color == nullptr || color->name == nullptr) {
+			continue;
+		}
+
+		std::string colorName(color->name);
+
+		if (
+				colorName != "green"
+				&& colorName != "blue"
+				&& colorName != "magenta"
+		) {
+			continue;
+		}
+
+		Blobber::BlobInfo* blobInfo = blobber->getBlobs(colorIndex);
+
+		if (blobInfo->count > 0) {
+			j["blobs"][colorName] = nlohmann::json::array();
+
+			for (int i = 0; i < blobInfo->count; i++) {
+				Blobber::Blob blob = blobInfo->blobs[i];
+
+				nlohmann::json blobJson;
+				blobJson["area"] = blob.area;
+				blobJson["cx"] = blob.centerX;
+				blobJson["cy"] = blob.centerY;
+				blobJson["x1"] = blob.x1;
+				blobJson["x2"] = blob.x2;
+				blobJson["y1"] = blob.y1;
+				blobJson["y2"] = blob.y2;
+
+				j["blobs"][colorName].push_back(blobJson);
+			}
+		}
+	}
+
+	auto jsonString = j.dump();
+
+	//std::cout << "! JSON time: " << Util::timerEnd(startTime) << std::endl;
+
+	hubCom->send(const_cast<char *>(jsonString.c_str()), jsonString.length());
 }

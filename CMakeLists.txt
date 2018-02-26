@@ -25,4 +25,5 @@ file(GLOB SOURCE_FILES
 
 add_executable(ximea_test ${SOURCE_FILES})
 target_link_libraries(ximea_test winmm.lib)
-target_link_libraries(ximea_test xiapi64.lib)target_link_libraries(ximea_test ws2_32 ${Boost_LIBRARIES})
+target_link_libraries(ximea_test xiapi64.lib)
+target_link_libraries(ximea_test ws2_32 ${Boost_LIBRARIES})

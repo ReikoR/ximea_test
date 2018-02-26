@@ -43,5 +43,8 @@ private:
 	double lastStepTime;
 	float totalTime;
 	Dir debugCameraDir;
+
+	void sendState();
 };
+
 #endif
