@@ -167,13 +167,19 @@ Gui::Button* Gui::createButton(std::string text, int x, int y, int width, int ty
 	return button;
 }
 
-void Gui::processFrame(BaseCamera::Frame *frame) {
-    unsigned char* f = frame->data;
-    int w = width;
-    int h = height;
-    unsigned char* p = rgb;
+void Gui::processFrame(unsigned char* bgr) {
+    //unsigned char* f = frame->data;
+    //int w = width;
+    //int h = height;
+    //unsigned char* p = rgb;
 
-    for (int y=1; y < h-1; y += 2) {//ignore sides
+	//__int64 startTime = Util::timerStart();
+
+	//openCLCompute->deBayer(f, p, w, h);
+
+	//std::cout << "! deBayer time: " << Util::timerEnd(startTime) << std::endl;
+
+    /*for (int y=1; y < h-1; y += 2) {//ignore sides
         for (int x = 1; x < w-1; x+=2) {
             //http://en.wikipedia.org/wiki/Bayer_filter
             //current block is BGGR
@@ -201,8 +207,9 @@ void Gui::processFrame(BaseCamera::Frame *frame) {
             p[txy++] = (f[xy-1]+f[xy+1]+f[xy-w]+f[xy+w]+2) >> 2;//left,right,up,down
             p[txy]   = f[xy];
         }
-    }
+    }*/
 
+    memcpy(rgb, bgr, static_cast<size_t>(3 * width * height));
     memcpy(rgbData, rgb, static_cast<size_t>(3 * width * height));
 }
 

@@ -2,6 +2,7 @@
 #define XIMEA_TEST_BLOBBER_H
 
 #include <ImageProcessor.h>
+#include "OpenCLCompute.h"
 
 #define MAX_WIDTH 1280
 #define MAX_HEIGHT 1024
@@ -117,15 +118,20 @@ public:
 	void clearColor(unsigned char colorIndex);
 	void clearColor(std::string colorName);
 
+	unsigned char *bgr;//BGR buffer
+
 private:
 	int rangeSum(int x, int w);
 
-	unsigned char colors_lookup[0x1000000];//all possible bgr combinations lookup table/
+	//unsigned char colors_lookup[0x1000000];//all possible bgr combinations lookup table/
+	unsigned char* colors_lookup;//all possible bgr combinations lookup table/
 	unsigned char pixel_active[MAX_WIDTH * MAX_HEIGHT];//0=ignore in segmentation, 1=use pixel
 	//unsigned char *segmented;//segmented image buffer 0-9
-	unsigned char *bgr;//BGR buffer
+
 	unsigned short *pout;//Temp out buffer (for blobs)
 	int width, height, bpp;
+
+	OpenCLCompute* openCLCompute;
 
 	BlobberRun rle[MAX_RUNS];
 	BlobberRegion regions[MAX_REG];

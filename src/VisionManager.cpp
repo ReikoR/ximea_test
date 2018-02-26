@@ -107,6 +107,8 @@ void VisionManager::run() {
 
 		BaseCamera::Frame *frame = frontCamera->getFrame();
 
+		blobber->analyse(frame->data);
+
 		if (showGui) {
 			if (gui == NULL) {
 				setupGui();
@@ -114,22 +116,18 @@ void VisionManager::run() {
 
 			gui->setFps(fpsCounter->getFps());
 
-			gui->processFrame(frame);
-		}
+			gui->processFrame(blobber->bgr);
 
-		//__int64 startTime = Util::timerStart();
-
-		blobber->analyse(frame->data);
-
-		//std::cout << "! Total time: " << Util::timerEnd(startTime) << std::endl;
-
-		if (showGui) {
 			gui->update();
 
 			if (gui->isQuitRequested()) {
 				running = false;
 			}
 		}
+
+		//__int64 startTime = Util::timerStart();
+
+		//std::cout << "! Total time: " << Util::timerEnd(startTime) << std::endl;
 		
 		/*if (fpsCounter->frameNumber % 60 == 0) {
 			std::cout << "! FPS: " << fpsCounter->getFps() << std::endl;
@@ -182,11 +180,11 @@ void VisionManager::setupFpsCounter() {
 	std::cout << "done!" << std::endl;
 }
 
-	camera->setGain(Config::cameraGain);
-	//camera->setGain(4);
-	camera->setExposure(Config::cameraExposure);
+
 void VisionManager::setupXimeaCamera(std::string name, XimeaCamera* camera) {
 	camera->setFormat(XI_RAW8);
+	camera->setGain(Config::cameraGain);
+	camera->setExposure(Config::cameraExposure);
 	camera->setAutoWhiteBalance(false);
 	camera->setAutoExposureGain(false);
 	//camera->setLuminosityGamma(1.0f);
