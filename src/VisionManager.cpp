@@ -6,11 +6,11 @@
 #include "Util.h"
 #include <algorithm>
 
-	frontCamera(NULL),
-	gui(NULL),
-	blobber(NULL),
-	fpsCounter(NULL),
 VisionManager::VisionManager() :
+	frontCamera(nullptr),
+	gui(nullptr),
+	blobber(nullptr),
+	fpsCounter(nullptr),
 	running(false), debugVision(false),
 	dt(0.01666f), lastStepTime(0.0), totalTime(0.0f),
 	debugCameraDir(Dir::FRONT)
@@ -21,9 +21,13 @@ VisionManager::VisionManager() :
 VisionManager::~VisionManager() {
 	std::cout << "! Releasing all resources" << std::endl;
 
-	if (gui != NULL) delete gui; gui = NULL;
-	if (frontCamera != NULL) delete frontCamera; frontCamera = NULL;
-    if (blobber != NULL) delete blobber; blobber = NULL;
+	delete gui;
+	gui = nullptr;
+	delete frontCamera;
+	frontCamera = nullptr;
+    delete blobber;
+	blobber = nullptr;
+    delete hubCom;
 
 	std::cout << "! Resources freed" << std::endl;
 }
