@@ -123,9 +123,9 @@ void Blobber::setPixelColor(unsigned char r, unsigned char g, unsigned char b, u
 }
 
 void Blobber::setPixelColorRange(ImageProcessor::RGBRange rgbRange, unsigned char color) {
-	for (unsigned int r = rgbRange.minR; r <= rgbRange.maxR; r++) {
-		for (unsigned int g = rgbRange.minG; g <= rgbRange.maxG; g++) {
-			for (unsigned int b = rgbRange.minB; b <= rgbRange.maxB; b++) {
+	for (unsigned int r = rgbRange.minR; r < rgbRange.maxR + 1 ; r++) {
+		for (unsigned int g = rgbRange.minG; g < rgbRange.maxG + 1; g++) {
+			for (unsigned int b = rgbRange.minB; b < rgbRange.maxB + 1; b++) {
 				colors_lookup[b + (g << 8) + (r << 16)] = color;
 			}
 		}
