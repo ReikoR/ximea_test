@@ -111,8 +111,8 @@ Gui::Gui(HINSTANCE instance, Blobber* blobber, int width, int height) : instance
     rgb = new unsigned char[3 * width * height];
 	segmentedRgb = new unsigned char[3 * width * height];
 
-	frontRGB = createWindow(width, height, "Camera 1 RGB");
 	frontClassification = createWindow(width, height, "Camera 1 classification");
+	frontRGB = createWindow(width, height, "Camera 1 RGB");
 
 	selectedColorName = "";
 
@@ -285,8 +285,8 @@ void Gui::setFrontImages(unsigned char* rgb, unsigned char* yuyv, unsigned char*
 		}
 	}
 
-	frontRGB->setImage(rgb, true);
 	frontClassification->setImage(classification, true);
+	frontRGB->setImage(rgb, true);
 }
 
 void Gui::setFrontImages(unsigned char* rgb, unsigned char* rgbData) {
@@ -311,8 +311,8 @@ void Gui::setFrontImages(unsigned char* rgb, unsigned char* rgbData) {
 		}
 	}
 
-	frontRGB->setImage(rgb, true);
 	frontClassification->setImage(segmentedRgb, true);
+	frontRGB->setImage(rgb, true);
 }
 
 //void Gui::setRearImages(unsigned char* rgb, unsigned char* yuyv, unsigned char* dataY, unsigned char* dataU, unsigned char* dataV, unsigned char* classification) {
