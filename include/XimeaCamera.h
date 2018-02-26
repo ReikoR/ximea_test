@@ -36,12 +36,12 @@ public:
     bool supportsColor() { return getIntParam(XI_PRM_IMAGE_IS_COLOR) == 1; }
     int getAvailableBandwidth() { return getIntParam(XI_PRM_AVAILABLE_BANDWIDTH); }
 	int getExposure() { return getIntParam(XI_PRM_EXPOSURE); }
-    int getGain() { return getIntParam(XI_PRM_GAIN); }
+    float getGain() { return getFloatParam(XI_PRM_GAIN); }
     int getFramerate() { return getIntParam(XI_PRM_FRAMERATE); }
 
     void setFormat(int format) { setIntParam(XI_PRM_IMAGE_DATA_FORMAT, format); }
     void setExposure(int microseconds) { setIntParam(XI_PRM_EXPOSURE, microseconds); }
-    void setGain(int value) { setIntParam(XI_PRM_GAIN, value); }
+    void setGain(float value) { setFloatParam(XI_PRM_GAIN, value); }
     void setDownsampling(int times) { setIntParam(XI_PRM_DOWNSAMPLING, times); }
 	void setManualWhiteBalance() { setIntParam(XI_PRM_MANUAL_WB, 1); }
     void setWhiteBalanceRed(float value) { setFloatParam(XI_PRM_WB_KR, value); }
