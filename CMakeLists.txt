@@ -9,6 +9,11 @@ set(CMAKE_CXX_FLAGS "-fopenmp --std=gnu++11 ${CMAKE_CXX_FLAGS}")
 
 include_directories(include lib xiAPi)
 
+find_package(Boost REQUIRED COMPONENTS system)
+
+include_directories(${Boost_INCLUDE_DIRS})
+
+link_directories(xiApi ${Boost_LIBRARY_DIRS})
 
 file(GLOB SOURCE_FILES
         main.cpp
@@ -20,4 +25,4 @@ file(GLOB SOURCE_FILES
 
 add_executable(ximea_test ${SOURCE_FILES})
 target_link_libraries(ximea_test winmm.lib)
-target_link_libraries(ximea_test xiapi64.lib)
+target_link_libraries(ximea_test xiapi64.lib)target_link_libraries(ximea_test ws2_32 ${Boost_LIBRARIES})

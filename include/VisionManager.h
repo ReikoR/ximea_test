@@ -3,6 +3,7 @@
 
 #include "Vision.h"
 #include "FpsCounter.h"
+#include "HubCom.h"
 #include <string>
 
 class XimeaCamera;
@@ -23,6 +24,7 @@ public:
 	void setupGui();
 	void setupVision();
 	void setupFpsCounter();
+	void setupHubCom();
 
 	bool debugVision;
 	bool showGui;
@@ -34,6 +36,7 @@ private:
 	Gui* gui;
 	Blobber* blobber;
 	FpsCounter* fpsCounter;
+	HubCom* hubCom;
 
 	bool running;
 	float dt;

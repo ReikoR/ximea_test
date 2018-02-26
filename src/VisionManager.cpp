@@ -11,6 +11,7 @@ VisionManager::VisionManager() :
 	gui(nullptr),
 	blobber(nullptr),
 	fpsCounter(nullptr),
+	hubCom(nullptr),
 	running(false), debugVision(false),
 	dt(0.01666f), lastStepTime(0.0), totalTime(0.0f),
 	debugCameraDir(Dir::FRONT)
@@ -28,6 +29,7 @@ VisionManager::~VisionManager() {
     delete blobber;
 	blobber = nullptr;
     delete hubCom;
+	hubCom = nullptr;
 
 	std::cout << "! Resources freed" << std::endl;
 }
@@ -36,6 +38,7 @@ void VisionManager::setup() {
 	setupCameras();
 	setupVision();
 	setupFpsCounter();
+	setupHubCom();
 	setupSignalHandler();
 
 	if (showGui) {
@@ -214,4 +217,10 @@ void VisionManager::setupVision() {
 	blobber->setColorMinArea(6, 100);
 
 	blobber->start();
+
+void VisionManager::setupHubCom() {
+	hubCom = new HubCom("127.0.0.1", 8092, 8091);
+
+	hubCom->run();
+}
 }
