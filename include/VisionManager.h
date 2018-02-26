@@ -1,5 +1,5 @@
-#ifndef SOCCERBOT_H
-#define SOCCERBOT_H
+#ifndef XIMEA_TEST_VISION_MANAGER_H
+#define XIMEA_TEST_VISION_MANAGER_H
 
 #include "Vision.h"
 #include "FpsCounter.h"
@@ -9,11 +9,11 @@ class XimeaCamera;
 class Blobber;
 class Gui;
 
-class SoccerBot {
+class VisionManager {
 
 public:
-	SoccerBot();
-	~SoccerBot();
+	VisionManager();
+	~VisionManager();
 
 	void setup();
 	void run();
@@ -41,5 +41,4 @@ private:
 	float totalTime;
 	Dir debugCameraDir;
 };
-
-#endif // SOCCERBOT_H
+#endif

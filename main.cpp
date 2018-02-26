@@ -7,7 +7,7 @@
 #include "FpsCounter.h"
 #include "SignalHandler.h"
 #include "xiApi.h"
-#include "SoccerBot.h"
+#include "VisionManager.h"
 
 /** Use to init the clock */
 #define TIMER_INIT \
@@ -407,14 +407,15 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    SoccerBot* soccerBot = new SoccerBot();
+    auto* visionManager = new VisionManager();
 
-    soccerBot->showGui = showGui;
+    visionManager->showGui = showGui;
 
-    soccerBot->setup();
-    soccerBot->run();
+    visionManager->setup();
 
-    delete soccerBot;
-    soccerBot = NULL;
+    visionManager->run();
+
+    delete visionManager;
+    visionManager = nullptr;
 }
 

@@ -1,4 +1,4 @@
-#include "SoccerBot.h"
+#include "VisionManager.h"
 #include "XimeaCamera.h"
 #include "Gui.h"
 #include "FpsCounter.h"
@@ -6,11 +6,11 @@
 #include "Util.h"
 #include <algorithm>
 
-SoccerBot::SoccerBot() :
 	frontCamera(NULL),
 	gui(NULL),
 	blobber(NULL),
 	fpsCounter(NULL),
+VisionManager::VisionManager() :
 	running(false), debugVision(false),
 	dt(0.01666f), lastStepTime(0.0), totalTime(0.0f),
 	debugCameraDir(Dir::FRONT)
@@ -18,7 +18,7 @@ SoccerBot::SoccerBot() :
 
 }
 
-SoccerBot::~SoccerBot() {
+VisionManager::~VisionManager() {
 	std::cout << "! Releasing all resources" << std::endl;
 
 	if (gui != NULL) delete gui; gui = NULL;
@@ -28,7 +28,7 @@ SoccerBot::~SoccerBot() {
 	std::cout << "! Resources freed" << std::endl;
 }
 
-void SoccerBot::setup() {
+void VisionManager::setup() {
 	setupCameras();
 	setupVision();
 	setupFpsCounter();
@@ -39,7 +39,7 @@ void SoccerBot::setup() {
 	}
 }
 
-void SoccerBot::run() {
+void VisionManager::run() {
 	std::cout << "! Starting main loop" << std::endl;
 
 	running = true;
@@ -141,7 +141,7 @@ void SoccerBot::run() {
 	std::cout << "! Main loop ended" << std::endl;
 }
 
-void SoccerBot::setupGui() {
+void VisionManager::setupGui() {
 	std::cout << "! Setting up GUI" << std::endl;
 
 	gui = new Gui(
@@ -151,7 +151,7 @@ void SoccerBot::setupGui() {
 	);
 }
 
-void SoccerBot::setupCameras() {
+void VisionManager::setupCameras() {
 	std::cout << "! Setting up cameras" << std::endl;
 
 	frontCamera = new XimeaCamera(374363729);
@@ -164,7 +164,7 @@ void SoccerBot::setupCameras() {
 	}
 }
 
-void SoccerBot::setupFpsCounter() {
+void VisionManager::setupFpsCounter() {
 	std::cout << "! Setting up fps counter.. ";
 
 	fpsCounter = new FpsCounter();
@@ -172,10 +172,10 @@ void SoccerBot::setupFpsCounter() {
 	std::cout << "done!" << std::endl;
 }
 
-void SoccerBot::setupXimeaCamera(std::string name, XimeaCamera* camera) {
 	camera->setGain(Config::cameraGain);
 	//camera->setGain(4);
 	camera->setExposure(Config::cameraExposure);
+void VisionManager::setupXimeaCamera(std::string name, XimeaCamera* camera) {
 	camera->setFormat(XI_RAW8);
 	camera->setAutoWhiteBalance(false);
 	camera->setAutoExposureGain(false);
@@ -194,11 +194,11 @@ void SoccerBot::setupXimeaCamera(std::string name, XimeaCamera* camera) {
 	std::cout << "  > Available bandwidth: " << camera->getAvailableBandwidth() << std::endl;
 }
 
-void SoccerBot::setupSignalHandler() {
+void VisionManager::setupSignalHandler() {
 	SignalHandler::setup();
 }
 
-void SoccerBot::setupVision() {
+void VisionManager::setupVision() {
 	blobber = new Blobber();
 
     blobber->loadColors("colors.dat");
